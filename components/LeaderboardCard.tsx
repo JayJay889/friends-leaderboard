@@ -16,14 +16,21 @@ function Delta({ delta }: { delta: number | null }) {
 
 export function EntryRow({ entry }: { entry: BoardEntry }) {
   return (
-    <li className="flex items-center gap-3 py-2">
-      <span className="w-7 text-center text-sm">
-        {entry.rank <= 3 ? MEDALS[entry.rank - 1] : <span className="text-zinc-500">{entry.rank}</span>}
-      </span>
-      <span className="text-xl leading-none">{entry.avatarEmoji}</span>
-      <span className="flex-1 truncate font-medium">{entry.displayName}</span>
-      <span className="tabular-nums text-sm text-zinc-300">{entry.display}</span>
-      <Delta delta={entry.delta} />
+    <li className="py-2">
+      <div className="flex items-center gap-3">
+        <span className="w-7 text-center text-sm">
+          {entry.rank <= 3 ? MEDALS[entry.rank - 1] : <span className="text-zinc-500">{entry.rank}</span>}
+        </span>
+        <span className="text-xl leading-none">{entry.avatarEmoji}</span>
+        <span className="flex-1 truncate font-medium">{entry.displayName}</span>
+        <span className="tabular-nums text-sm text-zinc-300">{entry.display}</span>
+        <Delta delta={entry.delta} />
+      </div>
+      {entry.selfDetail && (
+        <p className="ml-[4.25rem] mt-0.5 text-xs text-zinc-500">
+          you: <span className="tabular-nums text-zinc-400">{entry.selfDetail}</span>
+        </p>
+      )}
     </li>
   );
 }

@@ -1,11 +1,12 @@
 import Link from "next/link";
 import LeaderboardCard, { EntryRow } from "@/components/LeaderboardCard";
 import { getLeaderboardData } from "@/lib/leaderboards";
+import { currentUserId } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const data = await getLeaderboardData();
+  const data = await getLeaderboardData(currentUserId());
 
   if (!data) {
     return (

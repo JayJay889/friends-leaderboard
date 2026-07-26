@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 import DisconnectButton from "@/components/DisconnectButton";
 import Sparkline from "@/components/Sparkline";
 import { db, schema } from "@/db";
-import { getLeaderboardData } from "@/lib/leaderboards";
+import { formatHours, getLeaderboardData } from "@/lib/leaderboards";
 import { SCOPE } from "@/lib/google";
-import { sleepScore } from "@/lib/scores";
+import { sleepScore, windowStats } from "@/lib/scores";
 import { currentUserId } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -60,7 +60,8 @@ export default async function MePage({
     .orderBy(desc(schema.dailyMetrics.date))
     .limit(35);
 
-  const boards = await getLeaderboardData();
+  const boards = await getLeaderboardData(userId);
+  const week = windowStats(rows.filter((r) => r.date >= isoDaysAgo(7)));
   const myRanks =
     boards?.boards
       .map((b) => ({
@@ -140,6 +141,50 @@ export default async function MePage({
               </li>
             ))}
           </ul>
+        )}
+      </section>
+
+      {/* This week in numbers */}
+      <section className="rounded-2xl border border-white/5 bg-surface-raised p-5">
+        <h2 className="mb-1 font-bold">This week in numbers</h2>
+        <p className="mb-4 text-xs text-zinc-500">
+          7-day averages behind your scores — only you see these
+        </p>
+        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {(
+            [
+              ["👟 Steps / day", week.avgSteps != null ? new Intl.NumberFormat("en-US").format(Math.round(week.avgSteps)) : null],
+              ["🔥 Zone minutes (total)", week.totalAzm != null ? `${Math.round(week.totalAzm)} min` : null],
+              ["😴 Sleep / night", week.avgSleepMinutes != null ? formatHours(week.avgSleepMinutes) : null],
+              [
+                "🌙 Deep + REM",
+                week.avgDeepMinutes != null && week.avgRemMinutes != null && week.avgSleepMinutes
+                  ? `${formatHours(week.avgDeepMinutes + week.avgRemMinutes)} (${Math.round(((week.avgDeepMinutes + week.avgRemMinutes) / week.avgSleepMinutes) * 100)}%)`
+                  : null,
+              ],
+              ["📈 Sleep efficiency", week.avgSleepEfficiency != null ? `${Math.round(week.avgSleepEfficiency)}%` : null],
+              ["💯 Sleep score", week.avgSleepScore != null ? `${Math.round(week.avgSleepScore)} pts` : null],
+              ["❤️ Resting HR", week.avgRestingHr != null ? `${Math.round(week.avgRestingHr)} bpm` : null],
+              ["🧘 HRV (RMSSD)", week.avgHrv != null ? `${Math.round(week.avgHrv)} ms` : null],
+              ["🫁 Breathing rate", week.avgBreathingRate != null ? `${week.avgBreathingRate.toFixed(1)} br/min` : null],
+              ["🏃 VO₂ max", week.avgVo2max != null ? week.avgVo2max.toFixed(1) : null],
+            ] as [string, string | null][]
+          )
+            .filter(([, v]) => v != null)
+            .map(([label, value]) => (
+              <div key={label} className="rounded-lg bg-surface px-3 py-2">
+                <dt className="text-xs text-zinc-500">{label}</dt>
+                <dd className="mt-0.5 font-semibold tabular-nums">{value}</dd>
+              </div>
+            ))}
+        </dl>
+        {week.daysWithData === 0 ? (
+          <p className="text-sm text-zinc-500">No data this week yet — check back after a sync.</p>
+        ) : (
+          <p className="mt-3 text-xs text-zinc-600">
+            Sleep score = 50% duration (best at 8 h) + 30% deep+REM share (40% = full marks) + 20%
+            efficiency.
+          </p>
         )}
       </section>
 

@@ -41,9 +41,13 @@ export interface UserWindowStats {
   totalAzm: number | null;
   avgSleepScore: number | null;
   avgSleepMinutes: number | null;
+  avgSleepEfficiency: number | null;
+  avgDeepMinutes: number | null;
+  avgRemMinutes: number | null;
   avgRestingHr: number | null;
   avgVo2max: number | null;
   avgHrv: number | null;
+  avgBreathingRate: number | null;
 }
 
 function avg(values: number[]): number | null {
@@ -68,9 +72,13 @@ export function windowStats(rows: DailyMetricRow[]): UserWindowStats {
     totalAzm: azmVals.length ? azmVals.reduce((a, b) => a + b, 0) : null,
     avgSleepScore: avg(sleepScores),
     avgSleepMinutes: avg(nums((r) => r.sleepMinutes)),
+    avgSleepEfficiency: avg(nums((r) => r.sleepEfficiency)),
+    avgDeepMinutes: avg(nums((r) => r.deepMinutes)),
+    avgRemMinutes: avg(nums((r) => r.remMinutes)),
     avgRestingHr: avg(nums((r) => r.restingHeartRate)),
     avgVo2max: avg(nums((r) => r.vo2maxEstimate)),
     avgHrv: avg(nums((r) => r.hrvDailyRmssd)),
+    avgBreathingRate: avg(nums((r) => r.breathingRate)),
   };
 }
 

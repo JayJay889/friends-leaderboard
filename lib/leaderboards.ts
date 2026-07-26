@@ -11,6 +11,8 @@ export interface BoardEntry {
   rank: number;
   /** Human-readable value ("12,304", "78 pts"). Raw values only shown for steps/AZM. */
   display: string;
+  /** Raw numbers behind the score — only ever set on the viewer's own row. */
+  selfDetail: string | null;
   score: number; // sort key, higher = better
   delta: number | null; // previous-window rank minus current rank (positive = climbed)
 }
@@ -86,6 +88,41 @@ function rank(raw: RawBoard): Map<string, { rank: number; display: string; score
   return out;
 }
 
+export function formatHours(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  return `${h} h ${String(m).padStart(2, "0")} m`;
+}
+
+/** Raw numbers behind a board's score — shown only to the owner of the row. */
+function selfDetails(stats: ReturnType<typeof windowStats>): Record<string, string | null> {
+  const parts = {
+    sleep:
+      stats.avgSleepMinutes != null
+        ? [
+            formatHours(stats.avgSleepMinutes),
+            stats.avgDeepMinutes != null && stats.avgRemMinutes != null && stats.avgSleepMinutes > 0
+              ? `${Math.round(((stats.avgDeepMinutes + stats.avgRemMinutes) / stats.avgSleepMinutes) * 100)}% deep+REM`
+              : null,
+            stats.avgSleepEfficiency != null ? `${Math.round(stats.avgSleepEfficiency)}% efficient` : null,
+          ]
+            .filter(Boolean)
+            .join(" · ")
+        : null,
+    health:
+      stats.avgRestingHr != null
+        ? [
+            `${Math.round(stats.avgRestingHr)} bpm resting`,
+            stats.avgVo2max != null ? `VO₂ ${stats.avgVo2max.toFixed(1)}` : null,
+          ]
+            .filter(Boolean)
+            .join(" · ")
+        : null,
+    calm: stats.avgHrv != null ? `${Math.round(stats.avgHrv)} ms HRV` : null,
+  };
+  return { steps: null, workouts: null, ...parts };
+}
+
 const BOARD_META = [
   { key: "steps", title: "Steps", emoji: "👟", subtitle: "Avg daily steps, last 7 days" },
   { key: "workouts", title: "Workouts", emoji: "🔥", subtitle: "Active Zone Minutes, last 7 days" },
@@ -94,13 +131,15 @@ const BOARD_META = [
   { key: "calm", title: "Most Chill", emoji: "🧘", subtitle: "7-day avg HRV — a recovery proxy, not a medical measurement" },
 ] as const;
 
-export async function getLeaderboardData(): Promise<LeaderboardData | null> {
+export async function getLeaderboardData(viewerUserId?: string | null): Promise<LeaderboardData | null> {
   let users: User[];
   let rows: DailyMetricRow[];
   let prevRows: DailyMetricRow[];
 
   if (process.env.DEMO_MODE === "1") {
     ({ users, rows, prevRows } = demoData());
+    // In demo mode pretend the first fake friend is "you" so the self-detail UI is visible.
+    viewerUserId ??= users[0]?.id;
   } else {
     if (!process.env.DATABASE_URL) return null;
     const since = isoDaysAgo(7);
@@ -122,9 +161,13 @@ export async function getLeaderboardData(): Promise<LeaderboardData | null> {
     return m;
   };
 
-  const current = buildBoardScores(users, byUser(rows));
+  const rowsByUser = byUser(rows);
+  const current = buildBoardScores(users, rowsByUser);
   const previous = buildBoardScores(users, byUser(prevRows));
   const userById = new Map(users.map((u) => [u.id, u]));
+  const viewerDetails = viewerUserId
+    ? selfDetails(windowStats(rowsByUser.get(viewerUserId) ?? []))
+    : null;
 
   const boards: Board[] = [];
   const percentiles = new Map<string, number[]>();
@@ -143,6 +186,7 @@ export async function getLeaderboardData(): Promise<LeaderboardData | null> {
         avatarEmoji: u.avatarEmoji,
         rank: r.rank,
         display: r.display,
+        selfDetail: userId === viewerUserId ? viewerDetails?.[meta.key] ?? null : null,
         score: r.score,
         delta: prevRank == null ? null : prevRank - r.rank,
       });
@@ -166,6 +210,7 @@ export async function getLeaderboardData(): Promise<LeaderboardData | null> {
       avatarEmoji: u.avatarEmoji,
       rank: 0,
       display: `${Math.round(score * 100)} pts`,
+      selfDetail: null,
       score,
       delta: null,
     });
