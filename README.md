@@ -76,10 +76,12 @@ every connected user (late-syncing devices are caught by the overlap) and upsert
 | VO₂ max | `daily-vo2-max` | `dataPoints:reconcile` |
 
 Sleep efficiency isn't a direct API field; it's computed as
-`minutesAsleep / minutesInSleepPeriod`. Rollup value field names are extracted
-defensively (`countSum`/`count_sum`/…) since the docs don't pin exact JSON keys —
-if a metric comes back empty after the first real sync, log the raw payload and
-adjust the key list in `lib/sync.ts`.
+`minutesAsleep / minutesInSleepPeriod`. All request/response shapes and AIP-160
+filter fields were verified against the live API and its discovery document
+(`https://health.googleapis.com/$discovery/rest?version=v4`) on 2026-07-26 with a
+real Fitbit account — key facts: `CivilDateTime = {date:{year,month,day}}`, rollup
+responses use `civilStartTime`, AZM rollups are split per heart-rate zone, filters
+use snake_case data-type prefixes (e.g. `sleep.interval.civil_end_time`).
 
 **Vercel Hobby cron caveat:** `vercel.json` schedules 4×/day, but the Hobby plan
 may restrict crons to once daily. That's still fine (we re-pull 3 days each run).

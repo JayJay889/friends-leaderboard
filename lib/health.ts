@@ -16,9 +16,10 @@ export interface CivilDate {
   day: number;
 }
 
-export function toCivilDate(isoDate: string): CivilDate {
+/** CivilDateTime per the discovery doc: `{ date: { year, month, day }, time? }`. */
+export function toCivilDateTime(isoDate: string): { date: CivilDate } {
   const [year, month, day] = isoDate.split("-").map(Number);
-  return { year, month, day };
+  return { date: { year, month, day } };
 }
 
 export function civilToIso(d: { year: number; month: number; day: number }): string {
@@ -60,7 +61,7 @@ export async function dailyRollUp(
   let pageToken: string | undefined;
   do {
     const body: Record<string, unknown> = {
-      range: { start: toCivilDate(start), end: toCivilDate(endExclusive) },
+      range: { start: toCivilDateTime(start), end: toCivilDateTime(endExclusive) },
       windowSizeDays: 1,
     };
     if (pageToken) body.pageToken = pageToken;

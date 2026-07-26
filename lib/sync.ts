@@ -71,7 +71,9 @@ async function reconcileDaily(
   startDate: string,
   endDate: string,
 ): Promise<Map<string, any>> {
-  const filter = `date >= "${startDate}" AND date <= "${endDate}"`;
+  // Filter field pattern per API spec: `{daily_summary_data_type}.date` (snake_case).
+  const field = `${dataType.replace(/-/g, "_")}.date`;
+  const filter = `${field} >= "${startDate}" AND ${field} < "${addDays(endDate, 1)}"`;
   const points = await reconcile(accessToken, dataType, filter);
   const byDate = new Map<string, any>();
   for (const p of points) {
@@ -116,21 +118,19 @@ export async function syncUser(user: User, token: OauthTokenRow): Promise<SyncRe
   if (has(SCOPE.activity)) {
     await attempt("steps", async () => {
       for (const p of await dailyRollUp(accessToken, "steps", startDate, endExclusive)) {
-        const date = p.civilStartTime ? civilToIso(p.civilStartTime) : null;
-        const count = pickNumber(p.steps, ["countSum", "count_sum", "count", "sum"]);
+        const date = p.civilStartTime?.date ? civilToIso(p.civilStartTime.date) : null;
+        const count = pickNumber(p.steps, ["countSum"]);
         if (date && count != null) metric(date).steps = Math.round(count);
       }
     });
     await attempt("active-zone-minutes", async () => {
       for (const p of await dailyRollUp(accessToken, "active-zone-minutes", startDate, endExclusive)) {
-        const date = p.civilStartTime ? civilToIso(p.civilStartTime) : null;
-        const azm = pickNumber(p.activeZoneMinutes, [
-          "activeZoneMinutesSum",
-          "active_zone_minutes_sum",
-          "activeZoneMinutes",
-          "sum",
-        ]);
-        if (date && azm != null) metric(date).activeZoneMinutes = Math.round(azm);
+        const date = p.civilStartTime?.date ? civilToIso(p.civilStartTime.date) : null;
+        // AZM rollup is split per heart-rate zone; the total is their sum.
+        const zones = ["sumInFatBurnHeartZone", "sumInCardioHeartZone", "sumInPeakHeartZone"]
+          .map((k) => pickNumber(p.activeZoneMinutes, [k]) ?? 0);
+        const azm = zones.reduce((a, b) => a + b, 0);
+        if (date && p.activeZoneMinutes) metric(date).activeZoneMinutes = Math.round(azm);
       }
     });
     await attempt("daily-vo2-max", async () => {
@@ -189,15 +189,23 @@ export async function syncUser(user: User, token: OauthTokenRow): Promise<SyncRe
           if (rmssd != null) metric(date).hrvDailyRmssd = rmssd;
         }
       } catch {
-        const filter = `sampleTime >= "${startDate}T00:00:00Z" AND sampleTime < "${endExclusive}T00:00:00Z"`;
+        const filter = `heart_rate_variability.sample_time.physical_time >= "${startDate}T00:00:00Z" AND heart_rate_variability.sample_time.physical_time < "${endExclusive}T00:00:00Z"`;
         const points = await reconcile(accessToken, "heart-rate-variability", filter);
         const byDate = new Map<string, number[]>();
         for (const p of points) {
           const d = p.data ?? p;
           const hrv = d.heartRateVariability ?? d;
           const rmssd = pickNumber(hrv, ["rootMeanSquareOfSuccessiveDifferencesMilliseconds", "rmssd"]);
-          const ts = hrv?.sampleTime?.time ?? hrv?.sampleTime ?? null;
-          const date = typeof ts === "string" ? ts.slice(0, 10) : null;
+          // ObservationSampleTime: { physicalTime, civilTime, utcOffset }
+          const st = hrv?.sampleTime;
+          const date =
+            typeof st?.civilTime === "string"
+              ? st.civilTime.slice(0, 10)
+              : st?.civilTime?.date
+                ? civilToIso(st.civilTime.date)
+                : typeof st?.physicalTime === "string"
+                  ? st.physicalTime.slice(0, 10)
+                  : null;
           if (rmssd != null && date && date >= startDate && date <= endDate) {
             if (!byDate.has(date)) byDate.set(date, []);
             byDate.get(date)!.push(rmssd);
@@ -212,16 +220,22 @@ export async function syncUser(user: User, token: OauthTokenRow): Promise<SyncRe
 
   if (has(SCOPE.sleep)) {
     await attempt("sleep", async () => {
-      // Widen the window one day back so a session that started before midnight is caught.
-      const filter = `startTime >= "${addDays(startDate, -1)}T12:00:00Z" AND startTime < "${endExclusive}T12:00:00Z"`;
+      // Sleep supports filtering on session end (wake-up) time — civil variant matches
+      // the user's local calendar date.
+      const filter = `sleep.interval.civil_end_time >= "${startDate}" AND sleep.interval.civil_end_time < "${endExclusive}"`;
       const points = await reconcile(accessToken, "sleep", filter);
       const mainByDate = new Map<string, any>();
       for (const p of points) {
         const s = (p.data ?? p).sleep ?? (p.data ?? p);
-        if (!s?.interval?.endTime || !s.summary) continue;
-        if (s.metadata?.nap === true || s.metadata?.isNap === true) continue;
-        const date = String(s.interval.endTime).slice(0, 10); // attribute to wake-up date
-        if (date < startDate || date > endDate) continue;
+        if (!s?.interval || !s.summary) continue;
+        if (s.metadata?.nap === true) continue;
+        // Attribute to wake-up date; prefer the civil end time when present.
+        const date = s.interval.civilEndTime?.date
+          ? civilToIso(s.interval.civilEndTime.date)
+          : typeof s.interval.endTime === "string"
+            ? s.interval.endTime.slice(0, 10)
+            : null;
+        if (!date || date < startDate || date > endDate) continue;
         const minutes = pickNumber(s.summary, ["minutesAsleep"]) ?? 0;
         const prev = mainByDate.get(date);
         const prevMinutes = prev ? pickNumber(prev.summary, ["minutesAsleep"]) ?? 0 : -1;
