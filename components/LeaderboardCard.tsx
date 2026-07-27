@@ -94,8 +94,22 @@ export function EntryRow({
   );
 }
 
-export default function LeaderboardCard({ board }: { board: Board }) {
+export default function LeaderboardCard({
+  board,
+  maxEntries,
+}: {
+  board: Board;
+  /** Cap the list to the top N; the red-lantern row stays pinned after an ellipsis. */
+  maxEntries?: number;
+}) {
   const accent = accentFor(board.key);
+  const all = board.entries;
+  const hasLantern = all.length >= 3;
+  const capped = maxEntries != null && all.length > maxEntries;
+  const visible = capped ? all.slice(0, maxEntries) : all;
+  const lantern = capped && hasLantern ? all[all.length - 1] : null;
+  const hiddenCount = capped ? all.length - visible.length - (lantern ? 1 : 0) : 0;
+
   return (
     <section className={`rounded-2xl border border-hairline border-t-2 ${accent.border} bg-card p-5 shadow-card`}>
       <header className="mb-3 border-b border-hairline pb-3">
@@ -105,18 +119,24 @@ export default function LeaderboardCard({ board }: { board: Board }) {
         </div>
         <p className="label-caps mt-1">{board.subtitle}</p>
       </header>
-      {board.entries.length === 0 ? (
+      {all.length === 0 ? (
         <p className="py-6 text-center text-sm text-faint">No entries yet — the board awaits.</p>
       ) : (
         <ol className="divide-y divide-hairline/60">
-          {board.entries.map((e) => (
+          {visible.map((e) => (
             <EntryRow
               key={e.userId}
               entry={e}
               accentText={accent.text}
-              isLast={board.entries.length >= 3 && e.rank === board.entries.length}
+              isLast={hasLantern && e.rank === all.length}
             />
           ))}
+          {hiddenCount > 0 && (
+            <li className="py-1 text-center text-xs tracking-widest text-faint">
+              ··· {hiddenCount} more ···
+            </li>
+          )}
+          {lantern && <EntryRow entry={lantern} accentText={accent.text} isLast />}
         </ol>
       )}
     </section>

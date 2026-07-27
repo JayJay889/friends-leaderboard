@@ -37,6 +37,8 @@ export interface WeeklyStory {
   overtakes: Overtake[];
   climber: (StoryPerson & { spots: number }) | null;
   slider: (StoryPerson & { spots: number }) | null;
+  /** Everyone with net rank movement this week, biggest climb first. */
+  movers: (StoryPerson & { spots: number })[];
 }
 
 export interface Board {
@@ -299,5 +301,6 @@ function buildStory(boards: Board[], composite: BoardEntry[]): WeeklyStory {
     overtakes: overtakes.slice(0, 4),
     climber,
     slider,
+    movers: moves.filter((m) => m.spots !== 0).map((m) => ({ ...m.p, spots: m.spots })),
   };
 }
