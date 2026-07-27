@@ -149,8 +149,66 @@ export default async function TvPage({
           </section>
         </div>
       )}
+      {(data.story.formGuide.improved || data.story.formGuide.declined) && (
+        <section className="mt-10 border-t border-hairline pt-6">
+          <h2 className="label-caps mb-4 text-center">Form guide — actual numbers vs last week</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {data.story.formGuide.improved && (
+              <div className="flex items-center gap-4 rounded-2xl bg-ivory px-5 py-4 ring-1 ring-forest/30">
+                <Avatar
+                  name={data.story.formGuide.improved.displayName}
+                  charm={data.story.formGuide.improved.avatarEmoji}
+                  size={52}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="label-caps !text-forest">Most improved</p>
+                  <p className="truncate font-display text-2xl text-ink">
+                    {data.story.formGuide.improved.displayName}
+                  </p>
+                </div>
+                <span className="font-display text-4xl font-bold tabular-nums text-forest">
+                  +{data.story.formGuide.improved.pct}%
+                </span>
+              </div>
+            )}
+            {data.story.formGuide.declined && (
+              <div className="flex items-center gap-4 rounded-2xl bg-ivory px-5 py-4 ring-1 ring-brick/30">
+                <Avatar
+                  name={data.story.formGuide.declined.displayName}
+                  charm={data.story.formGuide.declined.avatarEmoji}
+                  size={52}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="label-caps !text-brick">Biggest decline</p>
+                  <p className="truncate font-display text-2xl text-ink">
+                    {data.story.formGuide.declined.displayName}
+                  </p>
+                </div>
+                <span className="font-display text-4xl font-bold tabular-nums text-brick">
+                  {data.story.formGuide.declined.pct}%
+                </span>
+              </div>
+            )}
+          </div>
+          {data.story.formGuide.standouts.length > 0 && (
+            <p className="mt-4 text-center text-lg text-sub">
+              {data.story.formGuide.standouts.map((s, i) => (
+                <span key={i}>
+                  {i > 0 && <span className="mx-3 text-faint">·</span>}
+                  <span className="font-semibold text-ink">{s.person.displayName}</span>{" "}
+                  {s.metric}{" "}
+                  <span className={`font-display font-bold ${s.pct > 0 ? "text-forest" : "text-brick"}`}>
+                    {s.pct > 0 ? "+" : ""}
+                    {s.pct}%
+                  </span>
+                </span>
+              ))}
+            </p>
+          )}
+        </section>
+      )}
       {data.story.overtakes.length > 0 && (
-        <ul className="mt-10 space-y-2 border-t border-hairline pt-6">
+        <ul className="mt-6 space-y-2 border-t border-hairline pt-6">
           {data.story.overtakes.map((o, i) => (
             <li key={i} className="flex items-baseline justify-center gap-2 text-lg text-sub">
               <span className="font-semibold text-ink">{o.winner.displayName}</span> swept past{" "}

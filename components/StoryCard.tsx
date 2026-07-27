@@ -55,6 +55,23 @@ export default function StoryCard({ story }: { story: WeeklyStory }) {
             {story.slider.spots === 1 ? "spot" : "spots"}
           </Line>
         )}
+        {story.formGuide.improved && (
+          <Line tag="In form">
+            <Name p={story.formGuide.improved} /> — {story.formGuide.improved.pct}% better than last
+            week across the metrics
+          </Line>
+        )}
+        {story.formGuide.declined && (
+          <Line tag="Off form">
+            <Name p={story.formGuide.declined} /> — {Math.abs(story.formGuide.declined.pct)}% down on
+            last week
+          </Line>
+        )}
+        {story.formGuide.standouts.slice(0, 2).map((s, i) => (
+          <Line key={`s${i}`} tag="Standout">
+            <Name p={s.person} /> — {s.metric} {s.pct > 0 ? "up" : "down"} {Math.abs(s.pct)}% this week
+          </Line>
+        ))}
         {story.lantern && (
           <Line tag="Red lantern">
             <Name p={story.lantern} /> holds the lantern — the comeback starts Monday

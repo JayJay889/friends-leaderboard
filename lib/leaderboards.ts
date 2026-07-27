@@ -39,6 +39,14 @@ export interface WeeklyStory {
   slider: (StoryPerson & { spots: number }) | null;
   /** Everyone with net rank movement this week, biggest climb first. */
   movers: (StoryPerson & { spots: number })[];
+  formGuide: FormGuide;
+}
+
+/** Value-based (not rank-based) week-over-week change. Positive % = improved. */
+export interface FormGuide {
+  improved: (StoryPerson & { pct: number }) | null;
+  declined: (StoryPerson & { pct: number }) | null;
+  standouts: { person: StoryPerson; metric: string; pct: number }[];
 }
 
 export interface Board {
@@ -187,8 +195,9 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
   };
 
   const rowsByUser = byUser(rows);
+  const prevByUser = byUser(prevRows);
   const current = buildBoardScores(users, rowsByUser);
-  const previous = buildBoardScores(users, byUser(prevRows));
+  const previous = buildBoardScores(users, prevByUser);
   const userById = new Map(users.map((u) => [u.id, u]));
   const viewerDetails = viewerUserId
     ? selfDetails(windowStats(rowsByUser.get(viewerUserId) ?? []))
@@ -248,14 +257,63 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
   return {
     boards,
     composite,
-    story: buildStory(boards, composite),
+    story: {
+      ...buildStory(boards, composite),
+      formGuide: buildFormGuide(users, rowsByUser, prevByUser),
+    },
     windowLabel: "Rolling 7 days",
     demo: process.env.DEMO_MODE === "1",
   };
 }
 
+/** Value-based week-over-week form: mean % improvement across available metrics. */
+function buildFormGuide(
+  users: User[],
+  currBy: Map<string, DailyMetricRow[]>,
+  prevBy: Map<string, DailyMetricRow[]>,
+): FormGuide {
+  const per: { person: StoryPerson; overall: number; changes: { metric: string; pct: number }[] }[] = [];
+  for (const u of users) {
+    const c = windowStats(currBy.get(u.id) ?? []);
+    const p = windowStats(prevBy.get(u.id) ?? []);
+    // [metric, current, previous, sign] — sign -1 where lower is better.
+    const defs: [string, number | null, number | null, 1 | -1][] = [
+      ["Steps", c.avgSteps, p.avgSteps, 1],
+      ["Workouts", c.totalAzm, p.totalAzm, 1],
+      ["Sleep", c.avgSleepScore, p.avgSleepScore, 1],
+      ["Resting HR", c.avgRestingHr, p.avgRestingHr, -1],
+      ["Recovery", c.avgHrv, p.avgHrv, 1],
+    ];
+    const changes: { metric: string; pct: number }[] = [];
+    for (const [metric, curr, prev, sign] of defs) {
+      if (curr == null || prev == null || prev <= 0) continue;
+      const pct = Math.round(((curr - prev) / prev) * 100 * sign);
+      if (Number.isFinite(pct)) changes.push({ metric, pct });
+    }
+    if (changes.length === 0) continue;
+    per.push({
+      person: { displayName: u.displayName, avatarEmoji: u.avatarEmoji },
+      overall: Math.round(changes.reduce((a, b) => a + b.pct, 0) / changes.length),
+      changes,
+    });
+  }
+  per.sort((a, b) => b.overall - a.overall);
+
+  const best = per[0];
+  const worst = per[per.length - 1];
+  return {
+    improved: best && best.overall >= 1 ? { ...best.person, pct: best.overall } : null,
+    declined: worst && worst.overall <= -1 && worst !== best ? { ...worst.person, pct: worst.overall } : null,
+    standouts: per
+      .flatMap((x) => x.changes.map((ch) => ({ person: x.person, ...ch })))
+      .filter((s) => Math.abs(s.pct) >= 3)
+      .sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct))
+      .slice(0, 3),
+  };
+}
+
 /** Derives the week's narrative from ranked boards + composite. */
-function buildStory(boards: Board[], composite: BoardEntry[]): WeeklyStory {
+function buildStory(boards: Board[], composite: BoardEntry[]): Omit<WeeklyStory, "formGuide"> {
   const person = (e: BoardEntry): StoryPerson => ({
     displayName: e.displayName,
     avatarEmoji: e.avatarEmoji,
