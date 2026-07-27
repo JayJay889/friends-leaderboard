@@ -16,41 +16,57 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+function dateline(): string {
+  const now = new Date();
+  const date = new Intl.DateTimeFormat("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(now);
+  // ISO week number
+  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const week = Math.ceil(((d.getTime() - Date.UTC(d.getUTCFullYear(), 0, 1)) / 86_400_000 + 1) / 7);
+  const m = now.getMonth() + 1;
+  const semester =
+    m >= 4 && m <= 9
+      ? `Summer ${now.getFullYear()}`
+      : `Winter ${m >= 10 ? now.getFullYear() : now.getFullYear() - 1}`;
+  return `${date} · Week ${week} · ${semester} Championship`;
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const loggedIn = Boolean(currentUserId());
   return (
     <html lang="en" className={display.variable}>
       <body className="min-h-screen">
-        <header className="mx-auto flex max-w-5xl items-end justify-between px-4 pb-4 pt-7">
-          <Link href="/" className="group">
-            <span className="font-display text-2xl font-bold tracking-tight">
-              Friends Leaderboard
-            </span>
-            <span className="label-caps mt-0.5 block group-hover:text-sub">
-              Est. 2026 · Members only
-            </span>
+        <header className="mx-auto max-w-4xl px-4 pt-8 text-center">
+          <p className="label-caps">Est. 2026 · Members only</p>
+          <Link href="/" className="mt-1 block font-display text-5xl font-bold tracking-tight">
+            Friends Leaderboard
           </Link>
-          <nav className="flex items-center gap-5 pb-1 text-sm text-sub">
-            <Link href="/" className="hover:text-ink">Boards</Link>
-            <Link href="/hall" className="hover:text-ink">Hall of Fame</Link>
-            <Link href="/tv" className="hover:text-ink">TV</Link>
-            {loggedIn ? (
-              <Link href="/me" className="hover:text-ink">Me</Link>
-            ) : (
-              <Link
-                href="/connect"
-                className="rounded-full bg-forest px-5 py-2 font-semibold text-ivory shadow-card transition-colors hover:bg-forest-soft"
-              >
-                Join
-              </Link>
-            )}
-          </nav>
+          <div className="rule-double mt-4" />
+          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 py-2 text-left">
+            <p className="label-caps !text-sub">{dateline()}</p>
+            <nav className="label-caps flex items-center gap-5 !text-sub">
+              <Link href="/" className="hover:!text-ink">Boards</Link>
+              <Link href="/hall" className="hover:!text-ink">Hall of Fame</Link>
+              <Link href="/tv" className="hover:!text-ink">TV</Link>
+              {loggedIn ? (
+                <Link href="/me" className="hover:!text-ink">Me</Link>
+              ) : (
+                <Link href="/connect" className="!text-forest hover:!text-forest-soft">
+                  Join the club →
+                </Link>
+              )}
+            </nav>
+          </div>
+          <div className="border-t border-ink" />
         </header>
-        <div className="mx-auto max-w-5xl px-4">
-          <div className="border-t border-hairline" />
-        </div>
-        <main className="mx-auto max-w-5xl px-4 pb-16 pt-6">{children}</main>
-        <footer className="mx-auto max-w-5xl px-4 pb-10 text-xs text-faint">
+        <main className="mx-auto max-w-4xl px-4 pb-16 pt-8">{children}</main>
+        <footer className="mx-auto max-w-4xl px-4 pb-10 text-xs text-faint">
+          <div className="mb-3 border-t border-hairline" />
           <Link href="/privacy" className="underline decoration-hairline underline-offset-2 hover:text-sub">
             Privacy
           </Link>

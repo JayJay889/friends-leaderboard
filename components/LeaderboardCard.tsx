@@ -1,55 +1,34 @@
 import Avatar from "./Avatar";
 import type { Board, BoardEntry } from "@/lib/leaderboards";
 
-const MEDAL_STYLES: Record<number, string> = {
-  1: "bg-brass text-ivory",
-  2: "bg-silverware text-ivory",
-  3: "bg-bronzeware text-ivory",
+const ROMAN: Record<string, string> = {
+  steps: "I",
+  workouts: "II",
+  sleep: "III",
+  health: "IV",
+  calm: "V",
 };
 
-// One signature neon per board — the same hue follows the metric everywhere.
-// Full class strings so Tailwind can see them.
-const BOARD_ACCENT: Record<string, { text: string; border: string; dot: string }> = {
-  steps: { text: "text-neon-lime", border: "border-t-neon-lime", dot: "bg-neon-lime" },
-  workouts: { text: "text-neon-coral", border: "border-t-neon-coral", dot: "bg-neon-coral" },
-  sleep: { text: "text-neon-violet", border: "border-t-neon-violet", dot: "bg-neon-violet" },
-  health: { text: "text-neon-pink", border: "border-t-neon-pink", dot: "bg-neon-pink" },
-  calm: { text: "text-neon-cyan", border: "border-t-neon-cyan", dot: "bg-neon-cyan" },
-};
-const GOLD = { text: "text-neon-gold", border: "border-t-neon-gold", dot: "bg-neon-gold" };
-
+// Kept for compatibility: value color only. Boards print in ink, composite in gold.
 export function accentFor(key?: string) {
-  return (key && BOARD_ACCENT[key]) || GOLD;
-}
-
-export function RankBadge({ rank }: { rank: number }) {
-  const medal = MEDAL_STYLES[rank];
-  return (
-    <span
-      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-display text-sm font-semibold ${
-        medal ?? "text-faint"
-      }`}
-    >
-      {rank}
-    </span>
-  );
+  return { text: key ? "text-ink" : "text-brass" };
 }
 
 function Delta({ delta }: { delta: number | null }) {
   if (delta == null || delta === 0) {
-    return <span className="w-10 text-right text-xs text-faint">·</span>;
+    return <span className="w-8 text-right text-xs text-faint">·</span>;
   }
   const up = delta > 0;
   return (
-    <span className={`w-10 text-right text-xs font-semibold ${up ? "text-forest" : "text-brick"}`}>
-      {up ? "▲" : "▼"} {Math.abs(delta)}
+    <span className={`w-8 text-right text-xs font-semibold ${up ? "text-forest" : "text-brick"}`}>
+      {up ? "▲" : "▼"}{Math.abs(delta)}
     </span>
   );
 }
 
 export function EntryRow({
   entry,
-  accentText = GOLD.text,
+  accentText = "text-brass",
   isLast = false,
 }: {
   entry: BoardEntry;
@@ -58,35 +37,31 @@ export function EntryRow({
 }) {
   const leader = entry.rank === 1;
   return (
-    <li
-      className={
-        leader
-          ? "-mx-2 rounded-xl bg-ivory px-2 py-2.5"
-          : isLast
-            ? "-mx-2 rounded-xl border border-brick/25 bg-brick/5 px-2 py-2"
-            : "py-2"
-      }
-    >
-      <div className="flex items-center gap-3">
-        <RankBadge rank={entry.rank} />
-        <Avatar name={entry.displayName} charm={entry.avatarEmoji} size={leader ? 38 : 34} ring={leader} />
-        <span className={`min-w-0 flex-1 truncate ${leader ? "font-semibold text-ink" : "font-medium text-sub"}`}>
-          {entry.displayName}
-          {isLast && (
-            <span className="label-caps ml-2 rounded-full border border-brick/40 px-2 py-0.5 !text-[9px] text-brick">
-              red lantern
-            </span>
-          )}
+    <li className={leader ? "py-2.5" : "py-1.5"}>
+      <div className="flex items-center gap-2.5">
+        <span className={`w-7 shrink-0 text-right font-display ${leader ? "text-lg font-semibold" : "text-sm text-faint"}`}>
+          {entry.rank}.
         </span>
+        <Avatar name={entry.displayName} charm={entry.avatarEmoji} size={leader ? 36 : 28} ring={leader} />
+        <span className={`shrink truncate ${leader ? "font-display text-xl font-semibold text-ink" : "text-[15px] text-sub"}`}>
+          {leader && <span className="mr-1.5 text-brass">♛</span>}
+          {entry.displayName}
+        </span>
+        {isLast && (
+          <span className="label-caps shrink-0 !text-[9px] !text-brick">red lantern</span>
+        )}
+        <span className="dotlead" />
         <span
-          className={`font-display font-bold tabular-nums ${accentText} ${leader ? "text-2xl" : "text-lg opacity-80"}`}
+          className={`shrink-0 font-display font-bold tabular-nums ${
+            isLast ? "text-brick" : accentText
+          } ${leader ? "text-2xl" : "text-base"}`}
         >
           {entry.display}
         </span>
         <Delta delta={entry.delta} />
       </div>
       {entry.selfDetail && (
-        <p className="ml-[4.6rem] mt-0.5 text-xs text-faint">
+        <p className="ml-[4.7rem] text-xs text-faint">
           you: <span className="tabular-nums text-sub">{entry.selfDetail}</span>
         </p>
       )}
@@ -102,7 +77,6 @@ export default function LeaderboardCard({
   /** Cap the list to the top N; the red-lantern row stays pinned after an ellipsis. */
   maxEntries?: number;
 }) {
-  const accent = accentFor(board.key);
   const all = board.entries;
   const hasLantern = all.length >= 3;
   const capped = maxEntries != null && all.length > maxEntries;
@@ -111,32 +85,34 @@ export default function LeaderboardCard({
   const hiddenCount = capped ? all.length - visible.length - (lantern ? 1 : 0) : 0;
 
   return (
-    <section className={`rounded-2xl border border-hairline border-t-2 ${accent.border} bg-card p-5 shadow-card`}>
-      <header className="mb-3 border-b border-hairline pb-3">
-        <div className="flex items-center gap-2">
-          <span className={`h-2 w-2 rounded-full ${accent.dot}`} />
-          <h2 className="font-display text-xl font-semibold">{board.title}</h2>
+    <section>
+      <header className="border-b-2 border-ink pb-1.5">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="font-display text-2xl font-semibold">
+            <span className="mr-2 text-base text-faint">{ROMAN[board.key] ?? "·"}.</span>
+            {board.title}
+          </h2>
         </div>
-        <p className="label-caps mt-1">{board.subtitle}</p>
+        <p className="label-caps mt-0.5">{board.subtitle}</p>
       </header>
       {all.length === 0 ? (
-        <p className="py-6 text-center text-sm text-faint">No entries yet — the board awaits.</p>
+        <p className="py-5 text-center text-sm text-faint">No entries yet — the board awaits.</p>
       ) : (
-        <ol className="divide-y divide-hairline/60">
+        <ol className="pt-1.5">
           {visible.map((e) => (
             <EntryRow
               key={e.userId}
               entry={e}
-              accentText={accent.text}
+              accentText="text-ink"
               isLast={hasLantern && e.rank === all.length}
             />
           ))}
           {hiddenCount > 0 && (
-            <li className="py-1 text-center text-xs tracking-widest text-faint">
+            <li className="py-0.5 text-center text-xs tracking-widest text-faint">
               ··· {hiddenCount} more ···
             </li>
           )}
-          {lantern && <EntryRow entry={lantern} accentText={accent.text} isLast />}
+          {lantern && <EntryRow entry={lantern} accentText="text-ink" isLast />}
         </ol>
       )}
     </section>

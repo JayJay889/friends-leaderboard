@@ -3,14 +3,27 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
   @apply bg-cream text-ink antialiased;
 }
 
-/* Small-caps label used across cards — the club-scoreboard voice. */
+/* Small-caps label — the scorecard voice. */
 .label-caps {
   @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-faint;
+}
+
+/* Dot leader, as on old menus and scorecards: Name ······· value */
+.dotlead {
+  @apply mx-2 min-w-6 flex-1 self-end border-b-2 border-dotted border-faint/70;
+  margin-bottom: 0.4em;
+}
+
+/* Double rule, broadsheet style. */
+.rule-double {
+  border-top: 3px double theme("colors.ink");
+  border-bottom: 1px solid theme("colors.ink");
+  height: 5px;
 }

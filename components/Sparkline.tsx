@@ -43,7 +43,7 @@ export default function Sparkline({
     <div className="flex items-end gap-2">
       <svg width={width} height={height} role="img" aria-label={`Trend, latest ${formatValue(last)}`}>
         <path d={d.trim()} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx={x(lastIdx)} cy={y(last)} r="3" fill="currentColor" stroke="#1B1815" strokeWidth="2" />
+        <circle cx={x(lastIdx)} cy={y(last)} r="3" fill="currentColor" stroke="#F2EBDC" strokeWidth="2" />
       </svg>
       <span className="whitespace-nowrap pb-0.5 font-display text-base font-bold tabular-nums">
         {formatValue(last)}

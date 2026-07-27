@@ -5,43 +5,44 @@ export default {
   theme: {
     extend: {
       colors: {
-        // "Members club after dark": the old-money token names now map to a
-        // warm near-black base with neon accents, so components restyle wholesale.
-        cream: "#131110", // page background
-        ivory: "#221E1A", // raised surface / dark text on neon buttons
-        card: "#1B1815",
-        ink: "#F5F0E6", // primary text (warm white)
-        sub: "#BFB6A6",
-        faint: "#8A8172",
-        hairline: "#322C25",
+        // "Club scorecard" print palette: paper & ink, gold for champions,
+        // crimson for the lantern/down, moss for up. Nothing else.
+        cream: "#F2EBDC", // paper
+        ivory: "#EAE1CB", // wash
+        card: "#F7F1E3", // barely-raised panel
+        ink: "#221C13",
+        sub: "#5D5443",
+        faint: "#9A8F76",
+        hairline: "#D6CAAE",
         forest: {
-          DEFAULT: "#C6F23F", // primary action — neon lime
-          soft: "#A8D62E",
-          wash: "#232A12",
+          DEFAULT: "#2F6B4F", // moss — positive / actions
+          soft: "#3F8564",
+          wash: "#E2EADB",
         },
         brass: {
-          DEFAULT: "#F0C64B", // gold — champion & medals
-          soft: "#C9A93F",
-          wash: "#2B2413",
+          DEFAULT: "#8A6D1A", // gold ink — champions
+          soft: "#C2A44E",
+          wash: "#EFE6CC",
         },
-        silverware: "#A3A5A8",
-        bronzeware: "#C98D5A",
-        brick: "#FF5C4D",
+        silverware: "#8B8778",
+        bronzeware: "#93602F",
+        brick: "#B3282D", // print crimson
+        // Legacy accent slots — all resolved into the print palette.
         neon: {
-          lime: "#C6F23F", // steps
-          coral: "#FF7A50", // workouts
-          violet: "#B78CFF", // sleep
-          pink: "#FF5D8F", // health
-          cyan: "#3EE6C0", // calm / HRV
-          gold: "#F0C64B", // composite
+          lime: "#221C13",
+          coral: "#221C13",
+          violet: "#221C13",
+          pink: "#221C13",
+          cyan: "#221C13",
+          gold: "#8A6D1A",
         },
       },
       fontFamily: {
         display: ["var(--font-display)", "Georgia", "serif"],
       },
       boxShadow: {
-        card: "0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.25)",
-        glow: "0 0 24px rgba(240, 198, 75, 0.12)",
+        card: "0 1px 2px rgba(34, 28, 19, 0.06)",
+        glow: "0 1px 2px rgba(34, 28, 19, 0.06)",
       },
     },
   },

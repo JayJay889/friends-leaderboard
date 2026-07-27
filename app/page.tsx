@@ -33,25 +33,25 @@ export default async function HomePage() {
   return (
     <div className="space-y-6">
       {data.demo && (
-        <p className="rounded-xl border border-brass-soft/40 bg-brass-wash px-4 py-2 text-center text-xs text-brass">
-          Demo mode — showing fake friends. Set DEMO_MODE=0 once real data flows.
+        <p className="border-y border-hairline py-1.5 text-center text-xs text-brick">
+          Demo edition — showing fake friends. Set DEMO_MODE=0 once real data flows.
         </p>
       )}
 
       {/* Composite hero */}
-      <section className="rounded-2xl border border-brass-soft/40 border-t-2 border-t-neon-gold bg-card p-6 shadow-glow">
-        <header className="mb-3 border-b border-hairline pb-4 text-center">
-          <p className="label-caps">Mean percentile across all boards · min 3 boards · {data.windowLabel.toLowerCase()}</p>
-          <h1 className="mt-1 font-display text-3xl font-bold tracking-tight">
-            The Healthiest Human
-          </h1>
+      <section>
+        <header className="mb-3 text-center">
+          <h1 className="font-display text-4xl font-bold tracking-tight">The Healthiest Human</h1>
+          <p className="label-caps mt-1.5">
+            Mean percentile across all boards · min 3 boards · {data.windowLabel.toLowerCase()}
+          </p>
         </header>
         {data.composite.length === 0 ? (
           <p className="py-4 text-center text-sm text-sub">
             Nobody qualifies yet — sync data on at least 3 boards to enter the running.
           </p>
         ) : (
-          <ol className="divide-y divide-hairline/60">
+          <ol className="mx-auto max-w-2xl">
             {data.composite.map((e) => (
               <EntryRow
                 key={e.userId}
@@ -67,10 +67,10 @@ export default async function HomePage() {
       {hall && hall.tally[0] && (
         <Link
           href="/hall"
-          className="flex items-center justify-between gap-3 rounded-2xl border border-brass-soft/40 bg-card px-5 py-3 shadow-card transition-colors hover:bg-ivory"
+          className="flex items-center justify-center gap-3 border-y border-hairline py-2 text-sm text-sub transition-colors hover:text-ink"
         >
-          <span className="text-sm text-sub">
-            <span className="font-display text-lg font-bold text-neon-gold">♛</span>{" "}
+          <span>
+            <span className="font-display font-bold text-brass">♛</span>{" "}
             <span className="font-semibold text-ink">{hall.tally[0].displayName}</span> leads the{" "}
             {hall.semesterName} championship with {hall.tally[0].crowns}{" "}
             {hall.tally[0].crowns === 1 ? "crown" : "crowns"}
@@ -84,7 +84,7 @@ export default async function HomePage() {
       {trends && <GroupTrendsCard trends={trends} />}
 
       {/* Five boards */}
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-x-10 gap-y-8 sm:grid-cols-2">
         {data.boards.map((b) => (
           <LeaderboardCard key={b.key} board={b} />
         ))}

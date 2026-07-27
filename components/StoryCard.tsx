@@ -27,12 +27,12 @@ export default function StoryCard({ story }: { story: WeeklyStory }) {
   if (!hasAnything) return null;
 
   return (
-    <section className="rounded-2xl border border-hairline bg-card p-5 shadow-card">
-      <header className="mb-2 border-b border-hairline pb-3">
-        <p className="label-caps">The week&apos;s dispatch</p>
-        <h2 className="mt-1 font-display text-xl font-semibold">Club Notes</h2>
+    <section>
+      <header className="border-b-2 border-ink pb-1.5">
+        <h2 className="font-display text-2xl font-semibold">Club Notes</h2>
+        <p className="label-caps mt-0.5">The week&apos;s dispatch</p>
       </header>
-      <ul className="divide-y divide-hairline/60">
+      <ul className="divide-y divide-hairline/60 pt-1">
         {story.champion && (
           <Line tag="Champion">
             <Name p={story.champion} /> rules the group with {story.champion.points}

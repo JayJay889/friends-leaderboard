@@ -1,5 +1,5 @@
 import Avatar from "@/components/Avatar";
-import LeaderboardCard, { RankBadge } from "@/components/LeaderboardCard";
+import LeaderboardCard from "@/components/LeaderboardCard";
 import TvRotator from "@/components/TvRotator";
 import { getLeaderboardData, type BoardEntry, type StoryPerson } from "@/lib/leaderboards";
 import { formatWeek, getHallOfFame } from "@/lib/seasons";
@@ -9,28 +9,26 @@ export const dynamic = "force-dynamic";
 function PodiumRow({ entry, isLast }: { entry: BoardEntry; isLast: boolean }) {
   const leader = entry.rank === 1;
   return (
-    <li
-      className={`flex items-center gap-5 rounded-2xl px-5 ${
-        leader
-          ? "bg-ivory py-4 shadow-glow ring-1 ring-brass-soft/40"
-          : isLast
-            ? "border border-brick/25 bg-brick/5 py-3"
-            : "py-3"
-      }`}
-    >
-      <RankBadge rank={entry.rank} />
-      <Avatar name={entry.displayName} charm={entry.avatarEmoji} size={leader ? 64 : 48} ring={leader} />
-      <span className={`min-w-0 flex-1 truncate font-display ${leader ? "text-4xl font-bold text-ink" : "text-2xl text-sub"}`}>
-        {entry.displayName}
-        {isLast && (
-          <span className="label-caps ml-3 rounded-full border border-brick/40 px-2 py-0.5 align-middle text-brick">
-            red lantern
-          </span>
-        )}
-      </span>
-      <span className={`font-display font-bold tabular-nums text-neon-gold ${leader ? "text-5xl" : "text-3xl opacity-80"}`}>
-        {entry.display}
-      </span>
+    <li className={leader ? "py-3" : "py-2"}>
+      <div className="flex items-center gap-4">
+        <span className={`w-10 shrink-0 text-right font-display ${leader ? "text-3xl font-semibold" : "text-xl text-faint"}`}>
+          {entry.rank}.
+        </span>
+        <Avatar name={entry.displayName} charm={entry.avatarEmoji} size={leader ? 64 : 48} ring={leader} />
+        <span className={`shrink truncate font-display ${leader ? "text-4xl font-bold text-ink" : "text-2xl text-sub"}`}>
+          {leader && <span className="mr-2 text-brass">♛</span>}
+          {entry.displayName}
+        </span>
+        {isLast && <span className="label-caps shrink-0 !text-brick">red lantern</span>}
+        <span className="dotlead" />
+        <span
+          className={`shrink-0 font-display font-bold tabular-nums ${isLast ? "text-brick" : "text-brass"} ${
+            leader ? "text-5xl" : "text-3xl opacity-90"
+          }`}
+        >
+          {entry.display}
+        </span>
+      </div>
     </li>
   );
 }
@@ -38,10 +36,11 @@ function PodiumRow({ entry, isLast }: { entry: BoardEntry; isLast: boolean }) {
 function MoverRow({ mover }: { mover: StoryPerson & { spots: number } }) {
   const up = mover.spots > 0;
   return (
-    <li className="flex items-center gap-4 rounded-xl bg-ivory px-4 py-3">
-      <Avatar name={mover.displayName} charm={mover.avatarEmoji} size={44} />
-      <span className="min-w-0 flex-1 truncate font-display text-xl text-ink">{mover.displayName}</span>
-      <span className={`font-display text-3xl font-bold tabular-nums ${up ? "text-forest" : "text-brick"}`}>
+    <li className="flex items-center gap-3 py-2">
+      <Avatar name={mover.displayName} charm={mover.avatarEmoji} size={40} />
+      <span className="shrink truncate font-display text-xl text-ink">{mover.displayName}</span>
+      <span className="dotlead" />
+      <span className={`shrink-0 font-display text-3xl font-bold tabular-nums ${up ? "text-forest" : "text-brick"}`}>
         {up ? "▲" : "▼"} {Math.abs(mover.spots)}
       </span>
     </li>
@@ -232,19 +231,17 @@ export default async function TvPage({
       </header>
       <ol className="space-y-2">
         {hall.tally.slice(0, top).map((t, i) => (
-          <li
-            key={t.displayName}
-            className={`flex items-center gap-5 rounded-2xl px-5 ${
-              i === 0 ? "bg-ivory py-4 shadow-glow ring-1 ring-brass-soft/40" : "py-3"
-            }`}
-          >
-            <Avatar name={t.displayName} charm={t.avatarEmoji} size={i === 0 ? 64 : 48} ring={i === 0} />
-            <span className={`min-w-0 flex-1 truncate font-display ${i === 0 ? "text-4xl font-bold text-ink" : "text-2xl text-sub"}`}>
-              {t.displayName}
-            </span>
-            <span className={`font-display font-bold tabular-nums text-neon-gold ${i === 0 ? "text-5xl" : "text-3xl opacity-80"}`}>
-              ♛ {t.crowns}
-            </span>
+          <li key={t.displayName} className={i === 0 ? "py-3" : "py-2"}>
+            <div className="flex items-center gap-4">
+              <Avatar name={t.displayName} charm={t.avatarEmoji} size={i === 0 ? 64 : 48} ring={i === 0} />
+              <span className={`shrink truncate font-display ${i === 0 ? "text-4xl font-bold text-ink" : "text-2xl text-sub"}`}>
+                {t.displayName}
+              </span>
+              <span className="dotlead" />
+              <span className={`shrink-0 font-display font-bold tabular-nums text-brass ${i === 0 ? "text-5xl" : "text-3xl opacity-90"}`}>
+                ♛ {t.crowns}
+              </span>
+            </div>
           </li>
         ))}
       </ol>

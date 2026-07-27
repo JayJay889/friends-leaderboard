@@ -9,7 +9,7 @@ function ChangeBadge({ pct }: { pct: number | null }) {
     <span
       className={`rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${
         flat
-          ? "bg-cream text-sub"
+          ? "bg-ivory text-sub"
           : up
             ? "bg-forest-wash text-forest"
             : "bg-brick/10 text-brick"
@@ -23,13 +23,13 @@ function ChangeBadge({ pct }: { pct: number | null }) {
 export default function GroupTrendsCard({ trends }: { trends: GroupTrends }) {
   const weeksShown = trends.weekStarts.length;
   return (
-    <section className="rounded-2xl border border-hairline bg-card p-5 shadow-card">
-      <header className="mb-4 flex flex-wrap items-end justify-between gap-2 border-b border-hairline pb-3">
+    <section>
+      <header className="mb-4 flex flex-wrap items-end justify-between gap-2 border-b-2 border-ink pb-1.5">
         <div>
-          <p className="label-caps">
+          <h2 className="font-display text-2xl font-semibold">Group Pulse</h2>
+          <p className="label-caps mt-0.5">
             Weekly group averages · last {weeksShown} {weeksShown === 1 ? "week" : "weeks"}
           </p>
-          <h2 className="mt-1 font-display text-xl font-semibold">Group Pulse</h2>
         </div>
         {trends.overallChangePct != null && (
           <div className="flex items-center gap-2 pb-0.5 text-sm">
