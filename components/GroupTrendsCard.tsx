@@ -46,7 +46,12 @@ export default function GroupTrendsCard({ trends }: { trends: GroupTrends }) {
       </header>
       <div className="grid gap-x-8 gap-y-5 sm:grid-cols-3">
         {trends.series.map((s) => (
-          <div key={s.key}>
+          <div
+            key={s.key}
+            className={
+              { steps: "text-neon-lime", sleepScore: "text-neon-violet", hrv: "text-neon-cyan" }[s.key]
+            }
+          >
             <div className="mb-1.5 flex items-center justify-between gap-2">
               <h3 className="label-caps">{s.label}</h3>
               <ChangeBadge pct={s.changePct} />

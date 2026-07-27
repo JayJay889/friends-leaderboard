@@ -37,7 +37,7 @@ export default async function HomePage() {
       )}
 
       {/* Composite hero */}
-      <section className="rounded-2xl border border-brass-soft/50 bg-card p-6 shadow-card">
+      <section className="rounded-2xl border border-brass-soft/40 border-t-2 border-t-neon-gold bg-card p-6 shadow-glow">
         <header className="mb-3 border-b border-hairline pb-4 text-center">
           <p className="label-caps">Mean percentile across all boards · min 3 boards · {data.windowLabel.toLowerCase()}</p>
           <h1 className="mt-1 font-display text-3xl font-bold tracking-tight">

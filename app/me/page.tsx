@@ -75,12 +75,12 @@ export default async function MePage({
       }))
       .filter((r) => r.entry) ?? [];
 
-  const trends: { label: string; pick: (r: any) => number | null; fmt?: (v: number) => string }[] = [
-    { label: "Steps", pick: (r) => r.steps, fmt: (v) => new Intl.NumberFormat("en-US").format(Math.round(v)) },
-    { label: "Active Zone Minutes", pick: (r) => r.activeZoneMinutes },
-    { label: "Sleep score", pick: (r) => sleepScore(r) },
-    { label: "Resting HR", pick: (r) => r.restingHeartRate, fmt: (v) => `${Math.round(v)} bpm` },
-    { label: "HRV (RMSSD)", pick: (r) => r.hrvDailyRmssd, fmt: (v) => `${Math.round(v)} ms` },
+  const trends: { label: string; color: string; pick: (r: any) => number | null; fmt?: (v: number) => string }[] = [
+    { label: "Steps", color: "text-neon-lime", pick: (r) => r.steps, fmt: (v) => new Intl.NumberFormat("en-US").format(Math.round(v)) },
+    { label: "Active Zone Minutes", color: "text-neon-coral", pick: (r) => r.activeZoneMinutes },
+    { label: "Sleep score", color: "text-neon-violet", pick: (r) => sleepScore(r) },
+    { label: "Resting HR", color: "text-neon-pink", pick: (r) => r.restingHeartRate, fmt: (v) => `${Math.round(v)} bpm` },
+    { label: "HRV (RMSSD)", color: "text-neon-cyan", pick: (r) => r.hrvDailyRmssd, fmt: (v) => `${Math.round(v)} ms` },
   ];
 
   const numbers: [string, string | null][] = [
@@ -187,7 +187,7 @@ export default async function MePage({
         <p className="mb-4 mt-1 text-xs text-faint">Last 7 and 30 days · only you can see raw values</p>
         <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
           {trends.map((t) => (
-            <div key={t.label}>
+            <div key={t.label} className={t.color}>
               <h3 className="label-caps mb-1.5">{t.label}</h3>
               <div className="flex flex-wrap items-center gap-6">
                 <div>

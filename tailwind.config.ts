@@ -5,33 +5,43 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Old-money palette: cream paper, ivory cards, warm ink, forest & brass.
-        cream: "#F5F0E6",
-        ivory: "#FBF8F1",
-        card: "#FFFDF8",
-        ink: "#2A2520",
-        sub: "#6F675A",
-        faint: "#9C937F",
-        hairline: "#E5DECD",
+        // "Members club after dark": the old-money token names now map to a
+        // warm near-black base with neon accents, so components restyle wholesale.
+        cream: "#131110", // page background
+        ivory: "#221E1A", // raised surface / dark text on neon buttons
+        card: "#1B1815",
+        ink: "#F5F0E6", // primary text (warm white)
+        sub: "#BFB6A6",
+        faint: "#8A8172",
+        hairline: "#322C25",
         forest: {
-          DEFAULT: "#1F4D3A",
-          soft: "#2E6B51",
-          wash: "#EDF2EC",
+          DEFAULT: "#C6F23F", // primary action — neon lime
+          soft: "#A8D62E",
+          wash: "#232A12",
         },
         brass: {
-          DEFAULT: "#A9852F",
-          soft: "#C7A968",
-          wash: "#F6EEDC",
+          DEFAULT: "#F0C64B", // gold — champion & medals
+          soft: "#C9A93F",
+          wash: "#2B2413",
         },
-        silverware: "#8E8E88",
-        bronzeware: "#9C6B4A",
-        brick: "#A94438",
+        silverware: "#A3A5A8",
+        bronzeware: "#C98D5A",
+        brick: "#FF5C4D",
+        neon: {
+          lime: "#C6F23F", // steps
+          coral: "#FF7A50", // workouts
+          violet: "#B78CFF", // sleep
+          pink: "#FF5D8F", // health
+          cyan: "#3EE6C0", // calm / HRV
+          gold: "#F0C64B", // composite
+        },
       },
       fontFamily: {
         display: ["var(--font-display)", "Georgia", "serif"],
       },
       boxShadow: {
-        card: "0 1px 2px rgba(42, 37, 32, 0.05), 0 8px 24px rgba(42, 37, 32, 0.05)",
+        card: "0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.25)",
+        glow: "0 0 24px rgba(240, 198, 75, 0.12)",
       },
     },
   },

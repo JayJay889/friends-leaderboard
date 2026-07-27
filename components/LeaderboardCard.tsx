@@ -7,11 +7,26 @@ const MEDAL_STYLES: Record<number, string> = {
   3: "bg-bronzeware text-ivory",
 };
 
+// One signature neon per board — the same hue follows the metric everywhere.
+// Full class strings so Tailwind can see them.
+const BOARD_ACCENT: Record<string, { text: string; border: string; dot: string }> = {
+  steps: { text: "text-neon-lime", border: "border-t-neon-lime", dot: "bg-neon-lime" },
+  workouts: { text: "text-neon-coral", border: "border-t-neon-coral", dot: "bg-neon-coral" },
+  sleep: { text: "text-neon-violet", border: "border-t-neon-violet", dot: "bg-neon-violet" },
+  health: { text: "text-neon-pink", border: "border-t-neon-pink", dot: "bg-neon-pink" },
+  calm: { text: "text-neon-cyan", border: "border-t-neon-cyan", dot: "bg-neon-cyan" },
+};
+const GOLD = { text: "text-neon-gold", border: "border-t-neon-gold", dot: "bg-neon-gold" };
+
+export function accentFor(key?: string) {
+  return (key && BOARD_ACCENT[key]) || GOLD;
+}
+
 export function RankBadge({ rank }: { rank: number }) {
   const medal = MEDAL_STYLES[rank];
   return (
     <span
-      className={`flex h-7 w-7 items-center justify-center rounded-full font-display text-sm font-semibold ${
+      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-display text-sm font-semibold ${
         medal ?? "text-faint"
       }`}
     >
@@ -26,20 +41,27 @@ function Delta({ delta }: { delta: number | null }) {
   }
   const up = delta > 0;
   return (
-    <span className={`w-10 text-right text-xs font-semibold ${up ? "text-forest-soft" : "text-brick"}`}>
+    <span className={`w-10 text-right text-xs font-semibold ${up ? "text-forest" : "text-brick"}`}>
       {up ? "▲" : "▼"} {Math.abs(delta)}
     </span>
   );
 }
 
-export function EntryRow({ entry }: { entry: BoardEntry }) {
+export function EntryRow({ entry, accentText = GOLD.text }: { entry: BoardEntry; accentText?: string }) {
+  const leader = entry.rank === 1;
   return (
-    <li className="py-2">
+    <li className={leader ? "-mx-2 rounded-xl bg-ivory px-2 py-2.5" : "py-2"}>
       <div className="flex items-center gap-3">
         <RankBadge rank={entry.rank} />
-        <Avatar name={entry.displayName} charm={entry.avatarEmoji} size={34} ring={entry.rank === 1} />
-        <span className="flex-1 truncate font-medium">{entry.displayName}</span>
-        <span className="font-display text-base font-semibold tabular-nums">{entry.display}</span>
+        <Avatar name={entry.displayName} charm={entry.avatarEmoji} size={leader ? 38 : 34} ring={leader} />
+        <span className={`flex-1 truncate ${leader ? "font-semibold text-ink" : "font-medium text-sub"}`}>
+          {entry.displayName}
+        </span>
+        <span
+          className={`font-display font-bold tabular-nums ${accentText} ${leader ? "text-2xl" : "text-lg opacity-80"}`}
+        >
+          {entry.display}
+        </span>
         <Delta delta={entry.delta} />
       </div>
       {entry.selfDetail && (
@@ -52,18 +74,22 @@ export function EntryRow({ entry }: { entry: BoardEntry }) {
 }
 
 export default function LeaderboardCard({ board }: { board: Board }) {
+  const accent = accentFor(board.key);
   return (
-    <section className="rounded-2xl border border-hairline bg-card p-5 shadow-card">
+    <section className={`rounded-2xl border border-hairline border-t-2 ${accent.border} bg-card p-5 shadow-card`}>
       <header className="mb-3 border-b border-hairline pb-3">
-        <p className="label-caps">{board.subtitle}</p>
-        <h2 className="mt-1 font-display text-xl font-semibold">{board.title}</h2>
+        <div className="flex items-center gap-2">
+          <span className={`h-2 w-2 rounded-full ${accent.dot}`} />
+          <h2 className="font-display text-xl font-semibold">{board.title}</h2>
+        </div>
+        <p className="label-caps mt-1">{board.subtitle}</p>
       </header>
       {board.entries.length === 0 ? (
         <p className="py-6 text-center text-sm text-faint">No entries yet — the board awaits.</p>
       ) : (
         <ol className="divide-y divide-hairline/60">
           {board.entries.map((e) => (
-            <EntryRow key={e.userId} entry={e} />
+            <EntryRow key={e.userId} entry={e} accentText={accent.text} />
           ))}
         </ol>
       )}

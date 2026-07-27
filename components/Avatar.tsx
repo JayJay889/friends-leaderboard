@@ -23,10 +23,11 @@ export default function Avatar({
     backgroundColor: [],
   }).toString();
 
+  // Cream medallion so the dark line-art always reads against the dark theme.
   return (
     <span
-      className={`inline-block shrink-0 overflow-hidden rounded-full bg-brass-wash ${
-        ring ? "ring-2 ring-brass-soft" : "ring-1 ring-hairline"
+      className={`inline-block shrink-0 overflow-hidden rounded-full bg-[#F2EBDC] ${
+        ring ? "ring-2 ring-brass" : "ring-1 ring-hairline"
       }`}
       style={{ width: size, height: size }}
       aria-hidden="true"

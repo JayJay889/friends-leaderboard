@@ -40,12 +40,12 @@ export default function Sparkline({
   const last = values[lastIdx]!;
 
   return (
-    <div className="flex items-end gap-2 text-forest-soft">
+    <div className="flex items-end gap-2">
       <svg width={width} height={height} role="img" aria-label={`Trend, latest ${formatValue(last)}`}>
         <path d={d.trim()} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx={x(lastIdx)} cy={y(last)} r="3" fill="currentColor" stroke="#FFFDF8" strokeWidth="2" />
+        <circle cx={x(lastIdx)} cy={y(last)} r="3" fill="currentColor" stroke="#1B1815" strokeWidth="2" />
       </svg>
-      <span className="whitespace-nowrap pb-0.5 font-display text-sm font-semibold tabular-nums text-ink">
+      <span className="whitespace-nowrap pb-0.5 font-display text-base font-bold tabular-nums">
         {formatValue(last)}
       </span>
     </div>
