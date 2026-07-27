@@ -46,20 +46,35 @@ export default function TvRotator({
   }, [index, go]);
 
   return (
-    <div className="fixed inset-0 z-50 flex cursor-none flex-col bg-cream">
+    <div className="fixed inset-0 z-50 flex cursor-none flex-col overflow-hidden bg-cream">
+      {/* Ambient aurora */}
+      <div className="aurora aurora-a left-[-12%] top-[-18%] h-[55vh] w-[55vw]" />
+      <div className="aurora aurora-b bottom-[-20%] right-[-12%] h-[60vh] w-[55vw]" />
+
       <div className="relative min-h-0 flex-1">
         {slides.map((slide, i) => (
           <div
             key={i}
-            className={`absolute inset-0 overflow-y-auto px-10 py-8 transition-opacity duration-700 ${
-              i === index ? "opacity-100" : "pointer-events-none opacity-0"
+            className={`absolute inset-0 overflow-y-auto px-10 py-8 transition-all duration-700 ease-out ${
+              i === index
+                ? "tv-active translate-y-0 scale-100 opacity-100"
+                : "pointer-events-none translate-y-3 scale-[0.985] opacity-0"
             }`}
           >
             {slide}
           </div>
         ))}
       </div>
-      <nav className="flex items-center justify-center gap-6 pb-5">
+
+      {/* Rotation progress toward the next slide */}
+      <div className="relative mx-auto mb-2.5 h-0.5 w-44 overflow-hidden rounded-full bg-white/10">
+        <div
+          key={index}
+          className="tv-progress h-full rounded-full bg-brass/80"
+          style={{ animationDuration: `${intervalSec}s` }}
+        />
+      </div>
+      <nav className="relative flex items-center justify-center gap-6 pb-5">
         {titles.map((title, i) => (
           <button
             key={title}

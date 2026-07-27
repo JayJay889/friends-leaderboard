@@ -113,7 +113,7 @@ export default function LeaderboardCard({
   const showRing = leader != null && board.key !== "age";
 
   return (
-    <section className="rounded-2xl border border-hairline bg-card p-4 shadow-card">
+    <section className="card-lift rounded-2xl border border-hairline bg-card p-4 shadow-card">
       <header className="mb-3 px-1">
         <h2 className="hl text-xs" style={{ color: accent.hex }}>
           {board.title}

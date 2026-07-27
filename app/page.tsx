@@ -36,7 +36,7 @@ export default async function HomePage() {
       )}
 
       {/* Composite hero: the podium */}
-      <section className="rounded-2xl border border-hairline bg-card p-6 pb-0 shadow-card">
+      <section className="anim-fade-up rounded-2xl border border-hairline bg-card p-6 pb-0 shadow-card">
         <header className="mb-5 text-center">
           <h1 className="text-3xl font-semibold tracking-tight">The Healthiest Human</h1>
           <p className="mt-1 text-xs text-faint">
@@ -70,7 +70,7 @@ export default async function HomePage() {
       {hall && hall.tally[0] && (
         <Link
           href="/hall"
-          className="flex flex-wrap items-center justify-center gap-2 rounded-xl border border-hairline bg-card px-5 py-2.5 text-sm text-sub shadow-card transition-colors hover:text-ink"
+          className="anim-fade-up flex flex-wrap items-center justify-center gap-2 rounded-xl border border-hairline bg-card px-5 py-2.5 text-sm text-sub shadow-card transition-colors hover:text-ink [animation-delay:.12s]"
         >
           <span>
             <span className="font-semibold text-brass">♛</span> <span className="font-semibold text-ink">{hall.tally[0].displayName}</span> leads the{" "}
@@ -82,7 +82,7 @@ export default async function HomePage() {
       )}
 
       {/* Five boards */}
-      <div className="grid gap-x-10 gap-y-8 sm:grid-cols-2">
+      <div className="board-grid grid gap-x-10 gap-y-8 sm:grid-cols-2">
         {data.boards.map((b) => (
           <LeaderboardCard key={b.key} board={b} />
         ))}

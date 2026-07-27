@@ -12,7 +12,9 @@ function Spot({ entry, size }: { entry: BoardEntry; size: number }) {
   const first = entry.rank === 1;
   return (
     <div className="flex w-28 flex-col items-center gap-1.5 sm:w-36">
-      <Avatar name={entry.displayName} charm={entry.avatarEmoji} size={size} ring={first} />
+      <span className={first ? "float-slow" : ""}>
+        <Avatar name={entry.displayName} charm={entry.avatarEmoji} size={size} ring={first} />
+      </span>
       <p className="max-w-full truncate font-display text-sm font-semibold text-ink">
         {entry.displayName}
       </p>

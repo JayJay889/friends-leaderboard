@@ -31,6 +31,7 @@ export default function Ring({
           strokeWidth={stroke}
         />
         <circle
+          className="ring-arc"
           cx={size / 2}
           cy={size / 2}
           r={r}
@@ -39,6 +40,7 @@ export default function Ring({
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={`${(c * v) / 100} ${c}`}
+          style={{ filter: `drop-shadow(0 0 5px ${color}55)` }}
         />
       </svg>
       <span className="absolute inset-0 flex flex-col items-center justify-center leading-none">

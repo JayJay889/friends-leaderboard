@@ -81,7 +81,7 @@ export default async function TvPage({
       {composite.length === 0 ? (
         <p className="text-center text-sub">Nobody qualifies yet — connect and sync to enter the running.</p>
       ) : (
-        <ol className="space-y-2">
+        <ol className="stagger-kids space-y-2">
           {podiumVisible.map((e) => (
             <PodiumRow
               key={e.userId}
@@ -102,7 +102,7 @@ export default async function TvPage({
 
   const boards = (
     <div className="mx-auto flex h-full max-w-7xl flex-col justify-center">
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div className="stagger-kids grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {data.boards.map((b) => (
           <LeaderboardCard key={b.key} board={b} maxEntries={top} />
         ))}
@@ -128,7 +128,7 @@ export default async function TvPage({
             {climbing.length === 0 ? (
               <p className="text-sm text-faint">Nobody climbed this week.</p>
             ) : (
-              <ol className="space-y-2">
+              <ol className="stagger-kids space-y-2">
                 {climbing.map((m) => (
                   <MoverRow key={m.displayName} mover={m} />
                 ))}
@@ -140,7 +140,7 @@ export default async function TvPage({
             {sliding.length === 0 ? (
               <p className="text-sm text-faint">Nobody slipped this week.</p>
             ) : (
-              <ol className="space-y-2">
+              <ol className="stagger-kids space-y-2">
                 {sliding.map((m) => (
                   <MoverRow key={m.displayName} mover={m} />
                 ))}
@@ -229,7 +229,7 @@ export default async function TvPage({
         </p>
         <h1 className="mt-2 font-display text-6xl font-bold tracking-tight">The Championship</h1>
       </header>
-      <ol className="space-y-2">
+      <ol className="stagger-kids space-y-2">
         {hall.tally.slice(0, top).map((t, i) => (
           <li key={t.displayName} className={i === 0 ? "py-3" : "py-2"}>
             <div className="flex items-center gap-4">
