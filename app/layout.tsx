@@ -61,9 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             Privacy
           </Link>
           <span className="mx-2">·</span>
-          No analytics, no trackers. Just friends and health scores.
-          <span className="mx-2">·</span>
-          Avatars: Notionists by Zoish (CC0), generated locally
+          No analytics, no trackers.
         </footer>
       </body>
     </html>

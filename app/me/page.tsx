@@ -123,20 +123,9 @@ export default async function MePage({
 
   const numbers: [string, string | null, number | null][] = [
     ["Steps / day", week.avgSteps != null ? new Intl.NumberFormat("en-US").format(Math.round(week.avgSteps)) : null, pctDelta(week.avgSteps, month.avgSteps)],
-    ["Zone minutes (total)", week.totalAzm != null ? `${Math.round(week.totalAzm)} min` : null, null],
+    ["Zone minutes", week.totalAzm != null ? `${Math.round(week.totalAzm)} min` : null, null],
     ["Sleep / night", week.avgSleepMinutes != null ? formatHours(week.avgSleepMinutes) : null, pctDelta(week.avgSleepMinutes, month.avgSleepMinutes)],
-    [
-      "Deep + REM",
-      week.avgDeepMinutes != null && week.avgRemMinutes != null && week.avgSleepMinutes
-        ? `${formatHours(week.avgDeepMinutes + week.avgRemMinutes)} (${Math.round(((week.avgDeepMinutes + week.avgRemMinutes) / week.avgSleepMinutes) * 100)}%)`
-        : null,
-      null,
-    ],
-    ["Sleep efficiency", week.avgSleepEfficiency != null ? `${Math.round(week.avgSleepEfficiency)}%` : null, null],
-    ["Sleep score", week.avgSleepScore != null ? `${Math.round(week.avgSleepScore)} pts` : null, pctDelta(week.avgSleepScore, month.avgSleepScore)],
     ["Resting HR", week.avgRestingHr != null ? `${Math.round(week.avgRestingHr)} bpm` : null, null],
-    ["HRV (RMSSD)", week.avgHrv != null ? `${Math.round(week.avgHrv)} ms` : null, pctDelta(week.avgHrv, month.avgHrv)],
-    ["Breathing rate", week.avgBreathingRate != null ? `${week.avgBreathingRate.toFixed(1)} br/min` : null, null],
     ["VO₂ max", week.avgVo2max != null ? week.avgVo2max.toFixed(1) : null, pctDelta(week.avgVo2max, month.avgVo2max)],
     ["Club Age", clubAge(week) != null ? `${clubAge(week)} yrs` : null, null],
   ];
@@ -145,8 +134,7 @@ export default async function MePage({
     <div className="space-y-6">
       {searchParams.welcome && (
         <p className="rounded-xl border border-forest-soft/40 bg-forest-wash px-4 py-3 text-sm text-forest">
-          Welcome to the club. Pick a name below — that&apos;s what friends will see. First data
-          appears after the next sync.
+          Welcome to the club. Pick a name below — your data is already on the boards.
         </p>
       )}
 
@@ -232,9 +220,7 @@ export default async function MePage({
           <button className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-[#101518] hover:bg-brass-soft">
             Save
           </button>
-          <p className="basis-full text-xs text-faint">
-            The charm is any few characters — changing it re-rolls your portrait.
-          </p>
+          <p className="basis-full text-xs text-faint">Change the charm to re-roll your portrait.</p>
         </form>
       </section>
 
@@ -260,7 +246,7 @@ export default async function MePage({
       {/* This week in numbers */}
       <section className="rounded-2xl border border-hairline bg-card p-5 shadow-card">
         <h2 className="font-display text-lg font-semibold">This week in numbers</h2>
-        <p className="mb-4 mt-1 text-xs text-faint">7-day averages behind your scores — only you see these</p>
+        <p className="mb-4 mt-1 text-xs text-faint">7-day averages · only you see these</p>
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {numbers
             .filter(([, v]) => v != null)
@@ -272,35 +258,20 @@ export default async function MePage({
               </div>
             ))}
         </dl>
-        {week.daysWithData === 0 ? (
-          <p className="text-sm text-faint">No data this week yet — check back after a sync.</p>
-        ) : (
-          <p className="mt-3 text-xs text-faint">
-            Sleep score = 50% duration (best at 8 h) + 30% deep+REM share (40% = full marks) + 20%
-            efficiency. Club Age is a playful estimate from VO₂ max, resting HR, HRV, sleep and
-            activity — only you can see the number; the board shows ranks only.
-          </p>
+        {week.daysWithData === 0 && (
+          <p className="text-sm text-faint">No data yet — first sync is on its way.</p>
         )}
       </section>
 
       {/* Trends */}
       <section className="rounded-2xl border border-hairline bg-card p-5 shadow-card">
         <h2 className="font-display text-lg font-semibold">Trends</h2>
-        <p className="mb-4 mt-1 text-xs text-faint">Last 7 and 30 days · only you can see raw values</p>
+        <p className="mb-4 mt-1 text-xs text-faint">Last 30 days</p>
         <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
           {trends.map((t) => (
             <div key={t.label} className={t.color}>
               <h3 className="label-caps mb-1.5">{t.label}</h3>
-              <div className="flex flex-wrap items-center gap-6">
-                <div>
-                  <p className="mb-1 text-[10px] uppercase tracking-wide text-faint">7d</p>
-                  <Sparkline values={series(rows, 7, t.pick)} width={140} formatValue={t.fmt} />
-                </div>
-                <div>
-                  <p className="mb-1 text-[10px] uppercase tracking-wide text-faint">30d</p>
-                  <Sparkline values={series(rows, 30, t.pick)} width={240} formatValue={t.fmt} />
-                </div>
-              </div>
+              <Sparkline values={series(rows, 30, t.pick)} width={260} formatValue={t.fmt} />
             </div>
           ))}
         </div>
@@ -311,16 +282,10 @@ export default async function MePage({
         <h2 className="mb-3 font-display text-lg font-semibold">Connection &amp; data</h2>
         {token ? (
           <>
-            <p className="mb-2 text-sm text-sub">
-              Connected since {token.connectedAt.toISOString().slice(0, 10)}. Granted access:
+            <p className="mb-4 text-sm text-sub">
+              Connected since {token.connectedAt.toISOString().slice(0, 10)} ·{" "}
+              {token.grantedScopes.filter((sc) => SCOPE_LABELS[sc]).length}/3 data scopes granted
             </p>
-            <ul className="mb-4 list-inside list-disc text-sm text-sub">
-              {token.grantedScopes
-                .filter((s) => SCOPE_LABELS[s])
-                .map((s) => (
-                  <li key={s}>{SCOPE_LABELS[s]}</li>
-                ))}
-            </ul>
             <DisconnectButton />
           </>
         ) : (

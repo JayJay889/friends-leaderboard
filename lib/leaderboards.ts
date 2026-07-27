@@ -197,11 +197,11 @@ export function compositeScores(
 }
 
 const BOARD_META = [
-  { key: "strain", title: "Strain", emoji: "🔥", subtitle: "Active Zone Minutes, last 7 days" },
-  { key: "sleep", title: "Sleep", emoji: "😴", subtitle: "Our own sleep score — duration, stages & efficiency" },
-  { key: "recovery", title: "Recovery", emoji: "🧘", subtitle: "7-day avg HRV, scored within the group — a proxy, not medical" },
-  { key: "health", title: "Health", emoji: "❤️", subtitle: "Resting heart rate + VO₂ max, scored within the group" },
-  { key: "age", title: "Club Age", emoji: "🎂", subtitle: "Youngest body first — playful estimate; only you can see your own number" },
+  { key: "strain", title: "Strain", emoji: "🔥", subtitle: "Active Zone Minutes · 7 days" },
+  { key: "sleep", title: "Sleep", emoji: "😴", subtitle: "Sleep score · 7 days" },
+  { key: "recovery", title: "Recovery", emoji: "🧘", subtitle: "HRV vs the group · 7 days" },
+  { key: "health", title: "Health", emoji: "❤️", subtitle: "Resting HR + VO₂ max · 7 days" },
+  { key: "age", title: "Club Age", emoji: "🎂", subtitle: "Youngest body first" },
 ] as const;
 
 export async function getLeaderboardData(viewerUserId?: string | null): Promise<LeaderboardData | null> {

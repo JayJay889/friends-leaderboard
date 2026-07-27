@@ -73,11 +73,6 @@ export function EntryRow({
         </span>
         <Delta delta={entry.delta} />
       </div>
-      {entry.selfDetail && (
-        <p className="ml-[4.6rem] pb-0.5 text-xs text-faint">
-          you: <span className="font-num tabular-nums text-sub">{entry.selfDetail}</span>
-        </p>
-      )}
     </li>
   );
 }
@@ -139,11 +134,6 @@ export default function LeaderboardCard({
                   <Avatar name={leader.displayName} charm={leader.avatarEmoji} size={26} ring />
                   {leader.displayName}
                 </p>
-                {leader.selfDetail && (
-                  <p className="text-xs text-faint">
-                    you: <span className="font-num text-sub">{leader.selfDetail}</span>
-                  </p>
-                )}
               </div>
             </div>
           )}

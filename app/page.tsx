@@ -40,7 +40,7 @@ export default async function HomePage() {
         <header className="mb-5 text-center">
           <h1 className="text-3xl font-semibold tracking-tight">The Healthiest Human</h1>
           <p className="mt-1 text-xs text-faint">
-            Mean percentile across all boards · min 3 boards · {data.windowLabel.toLowerCase()}
+            All boards combined · rolling 7 days
           </p>
         </header>
         {data.composite.length === 0 ? (
