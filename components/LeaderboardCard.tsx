@@ -1,14 +1,32 @@
+import Avatar from "./Avatar";
 import type { Board, BoardEntry } from "@/lib/leaderboards";
 
-const MEDALS = ["🥇", "🥈", "🥉"];
+const MEDAL_STYLES: Record<number, string> = {
+  1: "bg-brass text-ivory",
+  2: "bg-silverware text-ivory",
+  3: "bg-bronzeware text-ivory",
+};
+
+export function RankBadge({ rank }: { rank: number }) {
+  const medal = MEDAL_STYLES[rank];
+  return (
+    <span
+      className={`flex h-7 w-7 items-center justify-center rounded-full font-display text-sm font-semibold ${
+        medal ?? "text-faint"
+      }`}
+    >
+      {rank}
+    </span>
+  );
+}
 
 function Delta({ delta }: { delta: number | null }) {
   if (delta == null || delta === 0) {
-    return <span className="w-10 text-right text-xs text-zinc-500">—</span>;
+    return <span className="w-10 text-right text-xs text-faint">·</span>;
   }
   const up = delta > 0;
   return (
-    <span className={`w-10 text-right text-xs font-semibold ${up ? "text-emerald-400" : "text-rose-400"}`}>
+    <span className={`w-10 text-right text-xs font-semibold ${up ? "text-forest-soft" : "text-brick"}`}>
       {up ? "▲" : "▼"} {Math.abs(delta)}
     </span>
   );
@@ -18,17 +36,15 @@ export function EntryRow({ entry }: { entry: BoardEntry }) {
   return (
     <li className="py-2">
       <div className="flex items-center gap-3">
-        <span className="w-7 text-center text-sm">
-          {entry.rank <= 3 ? MEDALS[entry.rank - 1] : <span className="text-zinc-500">{entry.rank}</span>}
-        </span>
-        <span className="text-xl leading-none">{entry.avatarEmoji}</span>
+        <RankBadge rank={entry.rank} />
+        <Avatar name={entry.displayName} charm={entry.avatarEmoji} size={34} ring={entry.rank === 1} />
         <span className="flex-1 truncate font-medium">{entry.displayName}</span>
-        <span className="tabular-nums text-sm text-zinc-300">{entry.display}</span>
+        <span className="font-display text-base font-semibold tabular-nums">{entry.display}</span>
         <Delta delta={entry.delta} />
       </div>
       {entry.selfDetail && (
-        <p className="ml-[4.25rem] mt-0.5 text-xs text-zinc-500">
-          you: <span className="tabular-nums text-zinc-400">{entry.selfDetail}</span>
+        <p className="ml-[4.6rem] mt-0.5 text-xs text-faint">
+          you: <span className="tabular-nums text-sub">{entry.selfDetail}</span>
         </p>
       )}
     </li>
@@ -37,18 +53,15 @@ export function EntryRow({ entry }: { entry: BoardEntry }) {
 
 export default function LeaderboardCard({ board }: { board: Board }) {
   return (
-    <section className="rounded-2xl border border-white/5 bg-surface-raised p-5 shadow-lg">
-      <header className="mb-2">
-        <h2 className="text-lg font-bold">
-          <span className="mr-2">{board.emoji}</span>
-          {board.title}
-        </h2>
-        <p className="text-xs text-zinc-500">{board.subtitle}</p>
+    <section className="rounded-2xl border border-hairline bg-card p-5 shadow-card">
+      <header className="mb-3 border-b border-hairline pb-3">
+        <p className="label-caps">{board.subtitle}</p>
+        <h2 className="mt-1 font-display text-xl font-semibold">{board.title}</h2>
       </header>
       {board.entries.length === 0 ? (
-        <p className="py-6 text-center text-sm text-zinc-500">No data yet — connect a Fitbit!</p>
+        <p className="py-6 text-center text-sm text-faint">No entries yet — the board awaits.</p>
       ) : (
-        <ol className="divide-y divide-white/5">
+        <ol className="divide-y divide-hairline/60">
           {board.entries.map((e) => (
             <EntryRow key={e.userId} entry={e} />
           ))}

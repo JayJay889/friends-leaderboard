@@ -15,7 +15,7 @@ export default function Sparkline({
 }) {
   const present = values.filter((v): v is number => v != null);
   if (present.length < 2) {
-    return <p className="text-xs text-zinc-500">Not enough data yet</p>;
+    return <p className="text-xs text-faint">Not enough data yet</p>;
   }
   const min = Math.min(...present);
   const max = Math.max(...present);
@@ -40,12 +40,14 @@ export default function Sparkline({
   const last = values[lastIdx]!;
 
   return (
-    <div className="flex items-end gap-2">
+    <div className="flex items-end gap-2 text-forest-soft">
       <svg width={width} height={height} role="img" aria-label={`Trend, latest ${formatValue(last)}`}>
-        <path d={d.trim()} fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx={x(lastIdx)} cy={y(last)} r="3" fill="#a78bfa" stroke="#12141c" strokeWidth="2" />
+        <path d={d.trim()} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx={x(lastIdx)} cy={y(last)} r="3" fill="currentColor" stroke="#FFFDF8" strokeWidth="2" />
       </svg>
-      <span className="pb-0.5 text-sm font-semibold tabular-nums text-zinc-100">{formatValue(last)}</span>
+      <span className="whitespace-nowrap pb-0.5 font-display text-sm font-semibold tabular-nums text-ink">
+        {formatValue(last)}
+      </span>
     </div>
   );
 }

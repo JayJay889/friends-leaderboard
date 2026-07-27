@@ -2,22 +2,36 @@ import type { Config } from "tailwindcss";
 
 export default {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
-  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        surface: {
-          DEFAULT: "#12141c",
-          raised: "#1a1d29",
-          overlay: "#232738",
+        // Old-money palette: cream paper, ivory cards, warm ink, forest & brass.
+        cream: "#F5F0E6",
+        ivory: "#FBF8F1",
+        card: "#FFFDF8",
+        ink: "#2A2520",
+        sub: "#6F675A",
+        faint: "#9C937F",
+        hairline: "#E5DECD",
+        forest: {
+          DEFAULT: "#1F4D3A",
+          soft: "#2E6B51",
+          wash: "#EDF2EC",
         },
-        accent: {
-          DEFAULT: "#8b5cf6",
-          soft: "#a78bfa",
+        brass: {
+          DEFAULT: "#A9852F",
+          soft: "#C7A968",
+          wash: "#F6EEDC",
         },
+        silverware: "#8E8E88",
+        bronzeware: "#9C6B4A",
+        brick: "#A94438",
       },
       fontFamily: {
-        display: ["ui-rounded", "SF Pro Rounded", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "Georgia", "serif"],
+      },
+      boxShadow: {
+        card: "0 1px 2px rgba(42, 37, 32, 0.05), 0 8px 24px rgba(42, 37, 32, 0.05)",
       },
     },
   },

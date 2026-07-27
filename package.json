@@ -11,6 +11,8 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@dicebear/collection": "^9.4.2",
+    "@dicebear/core": "^9.4.3",
     "drizzle-orm": "^0.36.4",
     "next": "^14.2.15",
     "postgres": "^3.4.5",

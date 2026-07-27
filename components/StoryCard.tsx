@@ -1,19 +1,23 @@
-import type { WeeklyStory } from "@/lib/leaderboards";
+import Avatar from "./Avatar";
+import type { StoryPerson, WeeklyStory } from "@/lib/leaderboards";
 
-function Line({ icon, children }: { icon: string; children: React.ReactNode }) {
+function Name({ p }: { p: StoryPerson }) {
   return (
-    <li className="flex items-start gap-3 py-1.5">
-      <span className="mt-0.5 text-lg leading-none">{icon}</span>
-      <span className="text-sm text-zinc-300">{children}</span>
-    </li>
+    <span className="inline-flex items-baseline gap-1.5 font-semibold text-ink">
+      <span className="translate-y-1">
+        <Avatar name={p.displayName} charm={p.avatarEmoji} size={20} />
+      </span>
+      {p.displayName}
+    </span>
   );
 }
 
-function Name({ p }: { p: { displayName: string; avatarEmoji: string } }) {
+function Line({ tag, children }: { tag: string; children: React.ReactNode }) {
   return (
-    <span className="font-semibold text-zinc-100">
-      {p.avatarEmoji} {p.displayName}
-    </span>
+    <li className="flex items-baseline gap-3 py-2">
+      <span className="label-caps w-24 shrink-0 text-right">{tag}</span>
+      <span className="text-sm leading-relaxed text-sub">{children}</span>
+    </li>
   );
 }
 
@@ -23,37 +27,37 @@ export default function StoryCard({ story }: { story: WeeklyStory }) {
   if (!hasAnything) return null;
 
   return (
-    <section className="rounded-2xl border border-white/5 bg-surface-raised p-5">
-      <header className="mb-2">
-        <h2 className="text-lg font-bold">📣 This week&apos;s story</h2>
-        <p className="text-xs text-zinc-500">The drama, summarized</p>
+    <section className="rounded-2xl border border-hairline bg-card p-5 shadow-card">
+      <header className="mb-2 border-b border-hairline pb-3">
+        <p className="label-caps">The week&apos;s dispatch</p>
+        <h2 className="mt-1 font-display text-xl font-semibold">Club Notes</h2>
       </header>
-      <ul>
+      <ul className="divide-y divide-hairline/60">
         {story.champion && (
-          <Line icon="🏆">
+          <Line tag="Champion">
             <Name p={story.champion} /> rules the group with {story.champion.points}
           </Line>
         )}
         {story.climber && (
-          <Line icon="🚀">
-            <Name p={story.climber} /> is on the rise — up {story.climber.spots}{" "}
+          <Line tag="On the rise">
+            <Name p={story.climber} /> — up {story.climber.spots}{" "}
             {story.climber.spots === 1 ? "spot" : "spots"} across the boards
           </Line>
         )}
         {story.overtakes.map((o, i) => (
-          <Line key={i} icon="⚔️">
-            <Name p={o.winner} /> overtook <Name p={o.loser} /> in {o.boardEmoji} {o.boardTitle}
+          <Line key={i} tag="Overtaken">
+            <Name p={o.winner} /> swept past <Name p={o.loser} /> in {o.boardTitle}
           </Line>
         ))}
         {story.slider && (
-          <Line icon="🫠">
+          <Line tag="Rough week">
             <Name p={story.slider} /> slipped {story.slider.spots}{" "}
-            {story.slider.spots === 1 ? "spot" : "spots"} — rough week
+            {story.slider.spots === 1 ? "spot" : "spots"}
           </Line>
         )}
         {story.lantern && (
-          <Line icon="🏮">
-            <Name p={story.lantern} /> carries the red lantern. Underdog arc loading…
+          <Line tag="Red lantern">
+            <Name p={story.lantern} /> holds the lantern — the comeback starts Monday
           </Line>
         )}
       </ul>

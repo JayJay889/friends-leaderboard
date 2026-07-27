@@ -3,10 +3,14 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
-  @apply bg-surface text-zinc-100 antialiased;
-  background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(139, 92, 246, 0.15), transparent);
+  @apply bg-cream text-ink antialiased;
+}
+
+/* Small-caps label used across cards — the club-scoreboard voice. */
+.label-caps {
+  @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-faint;
 }
