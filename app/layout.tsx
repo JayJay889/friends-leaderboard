@@ -1,12 +1,19 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Barlow, Montserrat } from "next/font/google";
 import Link from "next/link";
 import { currentUserId } from "@/lib/session";
 import "./globals.css";
 
-const inter = Inter({
+// Free stand-ins for WHOOP's pairing: Proxima Nova (words) + DINPro (numbers).
+const words = Montserrat({
   subsets: ["latin"],
-  variable: "--font-display",
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-words",
+});
+const num = Barlow({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--font-num",
 });
 
 export const metadata: Metadata = {
@@ -18,14 +25,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const loggedIn = Boolean(currentUserId());
   return (
-    <html lang="en" className={inter.variable}>
-      <body className={`min-h-screen ${inter.className}`}>
+    <html lang="en" className={`${words.variable} ${num.variable}`}>
+      <body className="min-h-screen">
         <header className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 pb-3 pt-6">
-          <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-ink text-xs font-bold text-white">
-              F
-            </span>
-            Friends Leaderboard
+          <Link href="/" className="hl text-sm text-ink">
+            Friends<span className="text-brass">/</span>Leaderboard
           </Link>
           <nav className="flex items-center gap-1 text-sm font-medium">
             <Link href="/" className="rounded-lg px-3 py-1.5 text-sub hover:bg-ivory hover:text-ink">
@@ -44,7 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             ) : (
               <Link
                 href="/connect"
-                className="ml-2 rounded-lg bg-ink px-4 py-2 font-semibold text-white shadow-card transition-opacity hover:opacity-85"
+                className="hl ml-2 rounded-full bg-brass px-4 py-2 !text-xs text-[#101518] transition-colors hover:bg-brass-soft"
               >
                 Join
               </Link>
@@ -57,7 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             Privacy
           </Link>
           <span className="mx-2">·</span>
-          No analytics, no trackers. Just friends and step counts.
+          No analytics, no trackers. Just friends and health scores.
           <span className="mx-2">·</span>
           Avatars: Notionists by Zoish (CC0), generated locally
         </footer>

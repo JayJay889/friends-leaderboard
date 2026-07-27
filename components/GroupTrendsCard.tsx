@@ -9,7 +9,7 @@ function ChangeBadge({ pct }: { pct: number | null }) {
     <span
       className={`rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${
         flat
-          ? "bg-ivory text-sub"
+          ? "bg-white/5 text-sub"
           : up
             ? "bg-forest-wash text-forest"
             : "bg-brick/10 text-brick"
@@ -49,7 +49,7 @@ export default function GroupTrendsCard({ trends }: { trends: GroupTrends }) {
           <div
             key={s.key}
             className={
-              { steps: "text-neon-lime", sleepScore: "text-neon-violet", hrv: "text-neon-cyan" }[s.key]
+              { strain: "text-metric-strain", sleepScore: "text-metric-sleep", hrv: "text-metric-recovery" }[s.key]
             }
           >
             <div className="mb-1.5 flex items-center justify-between gap-2">

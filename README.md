@@ -4,9 +4,11 @@ A private, invite-only fitness leaderboard for a friend group. Everyone
 connects their Fitbit (via Google), the app syncs daily data from the
 **Google Health API** (`health.googleapis.com/v4/`), and the group gets:
 
-- **Five boards** — Steps, Workouts (Active Zone Minutes), Sleep (our own
-  score), Health (resting HR + VO₂ max), and Most Chill (HRV) — plus a
-  **Healthiest Human** composite with an Olympic podium
+- **Five boards**, mirroring the classic wearable pillars — Strain (Active
+  Zone Minutes), Sleep (our own score), Recovery (HRV, WHOOP-style
+  green/yellow/red bands), Health (resting HR + VO₂ max), and Club Age —
+  plus a **Healthiest Human** composite with an Olympic podium (steps are
+  still synced and shown on the personal dashboard, just not a board)
 - **Seasons** — every completed Mon–Sun week crowns a champion; most crowns
   wins the semester (Hall of Fame at `/hall`)
 - **A TV kiosk mode** (`/tv`) — auto-rotating full-screen views for a wall
@@ -109,11 +111,13 @@ pinger (e.g. cron-job.org) at `/api/sync` with the bearer header.
 
 Rolling 7-day window; deltas compare against the 7 days before that.
 
+- **Strain** = total Active Zone Minutes
 - **Sleep score** = `0.5·duration + 0.3·stages + 0.2·efficiency` (duration:
   100 at 8 h, gentle dip to 85 at 6 h/10 h, steep falloff outside; stages:
   (deep+REM)/asleep, 40% = 100)
+- **Recovery** = 7-day avg HRV, shown as a group-normalized % with
+  green/yellow/red valuation bands (67/34 thresholds)
 - **Health** = 60% resting HR (lower better, group-normalized) + 40% VO₂ max
-- **Most Chill** = 7-day avg HRV, shown as a group-normalized score
 - **Club Age** = a playful body-age estimate anchored on VO₂ max and nudged by
   resting HR, HRV, sleep score and activity volume — ranks are public, the
   number itself is visible only to its owner

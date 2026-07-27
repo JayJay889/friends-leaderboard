@@ -38,46 +38,46 @@ export default function StoryCard({ story }: { story: WeeklyStory }) {
       </header>
       <ul>
         {story.champion && (
-          <Line tag="Champion" chip="bg-brass-wash text-brass">
+          <Line tag="Champion" chip="bg-brass/15 text-brass">
             <Name p={story.champion} /> rules the group with {story.champion.points}
           </Line>
         )}
         {story.climber && (
-          <Line tag="On the rise" chip="bg-forest-wash text-forest">
+          <Line tag="On the rise" chip="bg-forest/15 text-forest">
             <Name p={story.climber} /> — up {story.climber.spots}{" "}
             {story.climber.spots === 1 ? "spot" : "spots"} across the boards
           </Line>
         )}
         {story.overtakes.map((o, i) => (
-          <Line key={i} tag="Overtaken" chip="bg-wash-violet text-neon-violet">
+          <Line key={i} tag="Overtaken" chip="bg-metric-strain/15 text-metric-strain">
             <Name p={o.winner} /> swept past <Name p={o.loser} /> in {o.boardTitle}
           </Line>
         ))}
         {story.formGuide.improved && (
-          <Line tag="In form" chip="bg-wash-cyan text-neon-cyan">
+          <Line tag="In form" chip="bg-metric-recovery/15 text-metric-recovery">
             <Name p={story.formGuide.improved} /> — {story.formGuide.improved.pct}% better than last
             week across the metrics
           </Line>
         )}
         {story.formGuide.declined && (
-          <Line tag="Off form" chip="bg-wash-coral text-neon-coral">
+          <Line tag="Off form" chip="bg-band-mid/15 text-band-mid">
             <Name p={story.formGuide.declined} /> — {Math.abs(story.formGuide.declined.pct)}% down on
             last week
           </Line>
         )}
         {story.formGuide.standouts.slice(0, 2).map((s, i) => (
-          <Line key={`s${i}`} tag="Standout" chip="bg-wash-pink text-neon-pink">
+          <Line key={`s${i}`} tag="Standout" chip="bg-metric-sleep/20 text-metric-sleep">
             <Name p={s.person} /> — {s.metric} {s.pct > 0 ? "up" : "down"} {Math.abs(s.pct)}% this week
           </Line>
         ))}
         {story.slider && (
-          <Line tag="Rough week" chip="bg-brick/10 text-brick">
+          <Line tag="Rough week" chip="bg-brick/15 text-brick">
             <Name p={story.slider} /> slipped {story.slider.spots}{" "}
             {story.slider.spots === 1 ? "spot" : "spots"}
           </Line>
         )}
         {story.lantern && (
-          <Line tag="Red lantern" chip="bg-brick/10 text-brick">
+          <Line tag="Red lantern" chip="bg-brick/15 text-brick">
             <Name p={story.lantern} /> holds the lantern — the comeback starts Monday
           </Line>
         )}

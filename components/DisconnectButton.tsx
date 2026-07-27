@@ -21,7 +21,7 @@ export default function DisconnectButton() {
         This revokes Google access and permanently deletes all your synced data. Sure?
       </p>
       <form method="post" action="/api/me/disconnect">
-        <button className="rounded-lg bg-brick px-4 py-2 text-sm font-semibold text-ivory hover:bg-brick/80">
+        <button className="rounded-lg bg-brick px-4 py-2 text-sm font-semibold text-white hover:bg-brick/80">
           Yes, delete everything
         </button>
       </form>

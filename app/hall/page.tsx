@@ -23,7 +23,7 @@ export default async function HallPage() {
       ) : (
         <>
           {/* Current semester championship */}
-          <section className="rounded-2xl border border-brass-soft/40 border-t-2 border-t-neon-gold bg-card p-6 shadow-glow">
+          <section className="rounded-2xl border border-brass-soft/40 border-t-2 border-t-brass bg-card p-6 shadow-glow">
             <header className="mb-3 border-b border-hairline pb-3 text-center">
               <p className="label-caps">
                 {hall.semesterName} championship · {hall.weeksCompleted}{" "}
@@ -41,7 +41,7 @@ export default async function HallPage() {
                       {t.displayName}
                       {i === 0 && <span className="label-caps ml-3 !text-brass">leading the semester</span>}
                     </span>
-                    <span className={`font-display font-bold tabular-nums text-neon-gold ${i === 0 ? "text-3xl" : "text-xl opacity-80"}`}>
+                    <span className={`font-display font-bold tabular-nums text-brass ${i === 0 ? "text-3xl" : "text-xl opacity-80"}`}>
                       ♛ {t.crowns}
                     </span>
                   </li>
@@ -62,7 +62,7 @@ export default async function HallPage() {
                   <span className="w-28 shrink-0 text-xs tabular-nums text-faint">{formatWeek(h.weekStart)}</span>
                   <Avatar name={h.person.displayName} charm={h.person.avatarEmoji} size={28} />
                   <span className="flex-1 truncate font-medium">{h.person.displayName}</span>
-                  <span className="font-display font-semibold tabular-nums text-neon-gold">{h.points} pts</span>
+                  <span className="font-display font-semibold tabular-nums text-brass">{h.points} pts</span>
                 </li>
               ))}
             </ol>
@@ -78,7 +78,7 @@ export default async function HallPage() {
                     <span className="w-28 shrink-0 text-xs text-faint">{s.name}</span>
                     <Avatar name={s.champion.displayName} charm={s.champion.avatarEmoji} size={32} />
                     <span className="flex-1 truncate font-display text-lg font-semibold">{s.champion.displayName}</span>
-                    <span className="font-display font-bold tabular-nums text-neon-gold">♛ {s.crowns}</span>
+                    <span className="font-display font-bold tabular-nums text-brass">♛ {s.crowns}</span>
                   </li>
                 ))}
               </ol>

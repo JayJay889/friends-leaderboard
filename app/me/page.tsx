@@ -76,11 +76,11 @@ export default async function MePage({
       .filter((r) => r.entry) ?? [];
 
   const trends: { label: string; color: string; pick: (r: any) => number | null; fmt?: (v: number) => string }[] = [
-    { label: "Steps", color: "text-neon-lime", pick: (r) => r.steps, fmt: (v) => new Intl.NumberFormat("en-US").format(Math.round(v)) },
-    { label: "Active Zone Minutes", color: "text-neon-coral", pick: (r) => r.activeZoneMinutes },
-    { label: "Sleep score", color: "text-neon-violet", pick: (r) => sleepScore(r) },
-    { label: "Resting HR", color: "text-neon-pink", pick: (r) => r.restingHeartRate, fmt: (v) => `${Math.round(v)} bpm` },
-    { label: "HRV (RMSSD)", color: "text-neon-cyan", pick: (r) => r.hrvDailyRmssd, fmt: (v) => `${Math.round(v)} ms` },
+    { label: "Steps", color: "text-metric-strain", pick: (r) => r.steps, fmt: (v) => new Intl.NumberFormat("en-US").format(Math.round(v)) },
+    { label: "Active Zone Minutes", color: "text-metric-strain", pick: (r) => r.activeZoneMinutes },
+    { label: "Sleep score", color: "text-metric-sleep", pick: (r) => sleepScore(r) },
+    { label: "Resting HR", color: "text-metric-health", pick: (r) => r.restingHeartRate, fmt: (v) => `${Math.round(v)} bpm` },
+    { label: "HRV (RMSSD)", color: "text-metric-recovery", pick: (r) => r.hrvDailyRmssd, fmt: (v) => `${Math.round(v)} ms` },
   ];
 
   const numbers: [string, string | null][] = [
@@ -131,7 +131,7 @@ export default async function MePage({
             Lucky charm
             <input name="avatarEmoji" defaultValue={user.avatarEmoji} maxLength={8} className={`${inputClass} w-24 text-center`} />
           </label>
-          <button className="rounded-lg bg-forest px-4 py-2 text-sm font-semibold text-ivory hover:bg-forest-soft">
+          <button className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-[#101518] hover:bg-brass-soft">
             Save
           </button>
           <p className="basis-full text-xs text-faint">

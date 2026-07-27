@@ -66,7 +66,7 @@ export default function ConnectPage({
         </ul>
       </section>
 
-      <form action="/api/auth/login" method="get" className="rounded-2xl border border-brass-soft/50 bg-card p-6 shadow-card">
+      <form action="/api/auth/login" method="get" className="rounded-2xl border border-brass/30 bg-card p-6 shadow-card">
         <label className="block text-sm text-sub">
           Invite code
           <input
@@ -77,7 +77,7 @@ export default function ConnectPage({
             className="mt-1 block w-full rounded-lg border border-hairline bg-ivory px-3 py-2 text-ink focus:border-forest-soft focus:outline-none"
           />
         </label>
-        <button className="mt-4 w-full rounded-xl bg-forest px-4 py-3 font-semibold text-ivory shadow-card transition-colors hover:bg-forest-soft">
+        <button className="mt-4 w-full rounded-xl bg-brass px-4 py-3 font-semibold text-[#101518] shadow-card transition-colors hover:bg-brass-soft">
           Connect with Google
         </button>
       </form>

@@ -5,53 +5,50 @@ export default {
   theme: {
     extend: {
       colors: {
-        // SF-startup neutrals + one saturated accent per board (used on numbers
-        // and washes, never as full panels).
-        cream: "#FAFAF8", // page
-        ivory: "#F3F3F0", // subtle wash
-        card: "#FFFFFF",
-        ink: "#1C1917",
-        sub: "#57534E",
-        faint: "#A8A29E",
-        hairline: "#E7E5E1",
+        // WHOOP-derived system (from their brand guidelines):
+        // near-black gradient surfaces, blue-gray text, teal for positive/CTA,
+        // one metric color per pillar, valuation bands for recovery-style scores.
+        cream: "#101518", // page base (gradient top #283339 set in globals)
+        ivory: "#1B2328", // raised wash
+        card: "#161C20",
+        ink: "#FFFFFF",
+        sub: "#9FB0BA",
+        faint: "#5E6E78",
+        hairline: "#232D33",
         forest: {
-          DEFAULT: "#059669",
-          soft: "#047857",
-          wash: "#ECFDF5",
+          DEFAULT: "#16EC06", // valuation up (WHOOP high-recovery green)
+          soft: "#12C405",
+          wash: "#0F2613",
         },
         brass: {
-          DEFAULT: "#D97706",
-          soft: "#F59E0B",
-          wash: "#FFFBEB",
+          DEFAULT: "#00F19F", // teal — CTAs, highlights, champions
+          soft: "#00C583",
+          wash: "#0A2A22",
         },
-        silverware: "#A1A1AA",
-        bronzeware: "#B45309",
-        brick: "#E11D48",
-        neon: {
-          lime: "#059669", // steps
-          coral: "#EA580C", // workouts
-          violet: "#7C3AED", // sleep
-          pink: "#E11D48", // health
-          cyan: "#0891B2", // calm
-          indigo: "#4F46E5", // club age
-          gold: "#D97706", // composite
+        silverware: "#6E7E88",
+        bronzeware: "#8A6B52",
+        brick: "#FF0026", // valuation down / red lantern
+        metric: {
+          strain: "#0093E7",
+          sleep: "#7BA1BB",
+          recovery: "#67AEE6",
+          health: "#00F19F",
+          age: "#9FB0BA",
+          gold: "#00F19F",
         },
-        wash: {
-          lime: "#ECFDF5",
-          coral: "#FFF7ED",
-          violet: "#F5F3FF",
-          pink: "#FFF1F2",
-          cyan: "#ECFEFF",
-          indigo: "#EEF2FF",
-          gold: "#FFFBEB",
+        band: {
+          high: "#16EC06",
+          mid: "#FFDE00",
+          low: "#FF0026",
         },
       },
       fontFamily: {
-        display: ["var(--font-display)", "system-ui", "sans-serif"],
+        display: ["var(--font-words)", "system-ui", "sans-serif"], // Proxima Nova stand-in
+        num: ["var(--font-num)", "system-ui", "sans-serif"], // DINPro stand-in
       },
       boxShadow: {
-        card: "0 1px 2px rgba(28, 25, 23, 0.04), 0 4px 12px rgba(28, 25, 23, 0.05)",
-        glow: "0 1px 2px rgba(28, 25, 23, 0.04), 0 4px 12px rgba(28, 25, 23, 0.05)",
+        card: "0 1px 2px rgba(0, 0, 0, 0.4)",
+        glow: "0 1px 2px rgba(0, 0, 0, 0.4)",
       },
     },
   },

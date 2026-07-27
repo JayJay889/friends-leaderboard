@@ -7,7 +7,7 @@ import { sleepScore } from "./scores";
 const WEEKS = 10;
 
 export interface TrendSeries {
-  key: "steps" | "sleepScore" | "hrv";
+  key: "strain" | "sleepScore" | "hrv";
   label: string;
   emoji: string;
   /** Weekly group averages, oldest → newest. Null = no data that week. */
@@ -71,10 +71,9 @@ export async function getGroupTrends(): Promise<GroupTrends | null> {
     return Math.round(((curr - prev) / prev) * 1000) / 10;
   };
 
-  const int = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
   const defs: [TrendSeries["key"], string, string, (r: DailyMetricRow) => number | null, (v: number) => string][] = [
-    ["steps", "Steps / day", "👟", (r) => r.steps, (v) => int.format(v)],
-    ["sleepScore", "Sleep score", "😴", (r) => sleepScore(r), (v) => `${Math.round(v)} pts`],
+    ["strain", "Strain (AZM / day)", "🔥", (r) => r.activeZoneMinutes, (v) => `${Math.round(v)} min`],
+    ["sleepScore", "Sleep score", "😴", (r) => sleepScore(r), (v) => `${Math.round(v)}`],
     ["hrv", "Recovery (HRV)", "🧘", (r) => r.hrvDailyRmssd, (v) => `${Math.round(v)} ms`],
   ];
 

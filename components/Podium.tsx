@@ -13,14 +13,14 @@ function Spot({ entry, size }: { entry: BoardEntry; size: number }) {
   return (
     <div className="flex w-28 flex-col items-center gap-1.5 sm:w-36">
       <Avatar name={entry.displayName} charm={entry.avatarEmoji} size={size} ring={first} />
-      <p className="max-w-full truncate text-sm font-semibold tracking-tight text-ink">
+      <p className="max-w-full truncate font-display text-sm font-semibold text-ink">
         {entry.displayName}
       </p>
-      <p className={`font-semibold tabular-nums tracking-tight ${first ? "text-xl text-brass" : "text-base text-sub"}`}>
+      <p className={`font-num font-bold tabular-nums ${first ? "text-2xl text-brass" : "text-lg text-sub"}`}>
         {entry.display}
       </p>
       <div
-        className={`flex w-full items-start justify-center rounded-t-xl border border-b-0 border-hairline pt-2 text-xs font-semibold ${step.h} ${
+        className={`flex w-full items-start justify-center rounded-t-xl border border-b-0 border-hairline pt-2 font-num text-xs font-semibold ${step.h} ${
           first ? "bg-brass-wash text-brass" : "bg-ivory text-faint"
         }`}
       >

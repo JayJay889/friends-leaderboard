@@ -250,7 +250,7 @@ export default async function TvPage({
           Last week ({formatWeek(hall.weeklyHonors[0].weekStart)}):{" "}
           <span className="font-semibold text-ink">{hall.weeklyHonors[0].person.displayName}</span> took the
           crown with{" "}
-          <span className="font-display font-bold text-neon-gold">{hall.weeklyHonors[0].points} pts</span>
+          <span className="font-display font-bold text-brass">{hall.weeklyHonors[0].points} pts</span>
         </p>
       )}
     </div>

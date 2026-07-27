@@ -78,24 +78,22 @@ type RawBoard = { userId: string; score: number; display: string }[];
 function buildBoardScores(users: User[], rowsByUser: Map<string, DailyMetricRow[]>) {
   const stats = new Map(users.map((u) => [u.id, windowStats(rowsByUser.get(u.id) ?? [])]));
 
-  const steps: RawBoard = [];
-  const workouts: RawBoard = [];
+  const strain: RawBoard = [];
   const sleep: RawBoard = [];
-  const calm: RawBoard = [];
+  const recovery: RawBoard = [];
   for (const u of users) {
     const s = stats.get(u.id)!;
-    if (s.avgSteps != null) steps.push({ userId: u.id, score: s.avgSteps, display: `${fmt.format(s.avgSteps)} /day` });
-    if (s.totalAzm != null) workouts.push({ userId: u.id, score: s.totalAzm, display: `${fmt.format(s.totalAzm)} min` });
-    if (s.avgSleepScore != null) sleep.push({ userId: u.id, score: s.avgSleepScore, display: `${Math.round(s.avgSleepScore)} pts` });
-    if (s.avgHrv != null) calm.push({ userId: u.id, score: s.avgHrv, display: "" });
+    if (s.totalAzm != null) strain.push({ userId: u.id, score: s.totalAzm, display: `${fmt.format(s.totalAzm)} min` });
+    if (s.avgSleepScore != null) sleep.push({ userId: u.id, score: s.avgSleepScore, display: `${Math.round(s.avgSleepScore)}` });
+    if (s.avgHrv != null) recovery.push({ userId: u.id, score: s.avgHrv, display: "" });
   }
   // Privacy: never show raw HRV to the group — display a group-normalized score.
-  if (calm.length > 0) {
-    const vals = calm.map((e) => e.score);
+  if (recovery.length > 0) {
+    const vals = recovery.map((e) => e.score);
     const [min, max] = [Math.min(...vals), Math.max(...vals)];
-    for (const e of calm) {
+    for (const e of recovery) {
       const norm = max === min ? 100 : Math.round(((e.score - min) / (max - min)) * 100);
-      e.display = `${norm} pts`;
+      e.display = `${norm}%`;
     }
   }
 
@@ -108,7 +106,7 @@ function buildBoardScores(users: User[], rowsByUser: Map<string, DailyMetricRow[
     })),
   );
   for (const [userId, score] of healthMap) {
-    health.push({ userId, score, display: `${score} pts` });
+    health.push({ userId, score, display: `${score}` });
   }
 
   // Club Age: ranked youngest-first; the number itself stays private
@@ -119,7 +117,7 @@ function buildBoardScores(users: User[], rowsByUser: Map<string, DailyMetricRow[
     if (a != null) age.push({ userId: u.id, score: -a, display: "" });
   }
 
-  return { steps, workouts, sleep, health, calm, age };
+  return { strain, sleep, recovery, health, age };
 }
 
 function rank(raw: RawBoard): Map<string, { rank: number; display: string; score: number; n: number }> {
@@ -159,10 +157,10 @@ function selfDetails(stats: ReturnType<typeof windowStats>): Record<string, stri
             .filter(Boolean)
             .join(" · ")
         : null,
-    calm: stats.avgHrv != null ? `${Math.round(stats.avgHrv)} ms HRV` : null,
+    recovery: stats.avgHrv != null ? `${Math.round(stats.avgHrv)} ms HRV` : null,
     age: clubAge(stats) != null ? `body age ${clubAge(stats)}` : null,
   };
-  return { steps: null, workouts: null, ...parts };
+  return { strain: null, ...parts };
 }
 
 /**
@@ -199,11 +197,10 @@ export function compositeScores(
 }
 
 const BOARD_META = [
-  { key: "steps", title: "Steps", emoji: "👟", subtitle: "Avg daily steps, last 7 days" },
-  { key: "workouts", title: "Workouts", emoji: "🔥", subtitle: "Active Zone Minutes, last 7 days" },
+  { key: "strain", title: "Strain", emoji: "🔥", subtitle: "Active Zone Minutes, last 7 days" },
   { key: "sleep", title: "Sleep", emoji: "😴", subtitle: "Our own sleep score — duration, stages & efficiency" },
+  { key: "recovery", title: "Recovery", emoji: "🧘", subtitle: "7-day avg HRV, scored within the group — a proxy, not medical" },
   { key: "health", title: "Health", emoji: "❤️", subtitle: "Resting heart rate + VO₂ max, scored within the group" },
-  { key: "calm", title: "Most Chill", emoji: "🧘", subtitle: "7-day avg HRV — a recovery proxy, not a medical measurement" },
   { key: "age", title: "Club Age", emoji: "🎂", subtitle: "Youngest body first — playful estimate, ranks only, your number stays private" },
 ] as const;
 
