@@ -1,10 +1,12 @@
 import Avatar from "@/components/Avatar";
+import GroupTrendsCard from "@/components/GroupTrendsCard";
 import { formatWeek, getHallOfFame } from "@/lib/seasons";
+import { getGroupTrends } from "@/lib/trends";
 
 export const dynamic = "force-dynamic";
 
 export default async function HallPage() {
-  const hall = await getHallOfFame();
+  const [hall, trends] = await Promise.all([getHallOfFame(), getGroupTrends()]);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -82,6 +84,7 @@ export default async function HallPage() {
               </ol>
             </section>
           )}
+          {trends && <GroupTrendsCard trends={trends} />}
         </>
       )}
     </div>

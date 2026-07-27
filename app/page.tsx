@@ -1,19 +1,15 @@
 import Link from "next/link";
-import GroupTrendsCard from "@/components/GroupTrendsCard";
 import LeaderboardCard, { EntryRow } from "@/components/LeaderboardCard";
 import Podium from "@/components/Podium";
-import StoryCard from "@/components/StoryCard";
 import { getLeaderboardData } from "@/lib/leaderboards";
 import { getHallOfFame } from "@/lib/seasons";
-import { getGroupTrends } from "@/lib/trends";
 import { currentUserId } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [data, trends, hall] = await Promise.all([
+  const [data, hall] = await Promise.all([
     getLeaderboardData(currentUserId()),
-    getGroupTrends(),
     getHallOfFame(),
   ]);
 
@@ -84,10 +80,6 @@ export default async function HomePage() {
           <span className="shrink-0 font-semibold text-brass">Hall of Fame →</span>
         </Link>
       )}
-
-      {/* Weekly narrative + group trends */}
-      <StoryCard story={data.story} />
-      {trends && <GroupTrendsCard trends={trends} />}
 
       {/* Five boards */}
       <div className="grid gap-x-10 gap-y-8 sm:grid-cols-2">
