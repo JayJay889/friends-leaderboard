@@ -87,13 +87,12 @@ function buildBoardScores(users: User[], rowsByUser: Map<string, DailyMetricRow[
     if (s.avgSleepScore != null) sleep.push({ userId: u.id, score: s.avgSleepScore, display: `${Math.round(s.avgSleepScore)}` });
     if (s.avgHrv != null) recovery.push({ userId: u.id, score: s.avgHrv, display: "" });
   }
-  // Privacy: never show raw HRV to the group — display a group-normalized score.
+  // Privacy: never show raw HRV — display a score relative to the group average
+  // (100 = double the group mean). Ordering is unchanged; nobody is pinned to 100.
   if (recovery.length > 0) {
-    const vals = recovery.map((e) => e.score);
-    const [min, max] = [Math.min(...vals), Math.max(...vals)];
+    const mean = recovery.reduce((a, e) => a + e.score, 0) / recovery.length;
     for (const e of recovery) {
-      const norm = max === min ? 100 : Math.round(((e.score - min) / (max - min)) * 100);
-      e.display = `${norm}%`;
+      e.display = `${Math.max(5, Math.min(100, Math.round((e.score / mean) * 50)))}%`;
     }
   }
 

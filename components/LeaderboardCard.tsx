@@ -94,17 +94,22 @@ export default function LeaderboardCard({
   const hiddenCount = capped ? all.length - visible.length - (lantern ? 1 : 0) : 0;
 
   const leader = all[0];
-  // Rings only where the fill is meaningful: sleep (absolute 0-100 score) and
-  // strain (fills toward a weekly target). Group-normalized boards would pin
-  // the leader's ring at 100 by definition — those render as lists instead.
+  // Every board leads with a ring. Strain fills toward a weekly target,
+  // score boards fill with the leader's score (mean-relative, so never pinned),
+  // and Club Age fills with youthfulness while keeping the number private.
   const STRAIN_WEEKLY_TARGET = 500; // Active Zone Minutes
-  const showRing = leader != null && (board.key === "strain" || board.key === "sleep");
+  const AGE_MIN = 18;
+  const AGE_MAX = 80;
+  const showRing = leader != null;
   const ringValue = !leader
     ? 0
     : board.key === "strain"
       ? Math.min(100, (leader.score / STRAIN_WEEKLY_TARGET) * 100)
-      : Math.max(0, Math.min(100, parseInt(leader.display, 10) || 0));
-  const ringColor = accent.hex;
+      : board.key === "age"
+        ? Math.max(0, Math.min(100, ((AGE_MAX + leader.score) / (AGE_MAX - AGE_MIN)) * 100))
+        : Math.max(0, Math.min(100, parseInt(leader.display, 10) || 0));
+  const ringColor =
+    board.key === "recovery" && leader ? bandColor(parseInt(leader.display, 10) || 0) : accent.hex;
 
   return (
     <section className="card-lift rounded-2xl border border-hairline bg-card p-4 shadow-card">
@@ -121,19 +126,33 @@ export default function LeaderboardCard({
           {showRing && (
             <div className="mb-2 flex items-center gap-4 px-1 pb-3">
               <Ring value={ringValue} color={ringColor} size={92}>
-                <span className="font-num text-2xl font-bold tabular-nums text-ink">
-                  {leader.display.split(" ")[0]}
-                </span>
-                {leader.display.includes(" ") && (
-                  <span className="text-[10px] text-faint">{leader.display.split(" ").slice(1).join(" ")}</span>
+                {board.key === "age" ? (
+                  // The number is private — the leader's face fills the ring instead.
+                  <Avatar name={leader.displayName} charm={leader.avatarEmoji} size={64} />
+                ) : (
+                  <>
+                    <span className="font-num text-2xl font-bold tabular-nums text-ink">
+                      {leader.display.split(" ")[0]}
+                    </span>
+                    {leader.display.includes(" ") && (
+                      <span className="text-[10px] text-faint">
+                        {leader.display.split(" ").slice(1).join(" ")}
+                      </span>
+                    )}
+                  </>
                 )}
               </Ring>
               <div className="min-w-0">
                 <p className="label-caps">Leader</p>
                 <p className="flex items-center gap-2 truncate font-display text-lg font-semibold text-ink">
-                  <Avatar name={leader.displayName} charm={leader.avatarEmoji} size={26} ring />
+                  {board.key !== "age" && (
+                    <Avatar name={leader.displayName} charm={leader.avatarEmoji} size={26} ring />
+                  )}
                   {leader.displayName}
                 </p>
+                {board.key === "age" && leader.display && (
+                  <p className="font-num text-sm font-semibold text-sub">{leader.display}</p>
+                )}
               </div>
             </div>
           )}

@@ -94,17 +94,17 @@ export function healthScores(
   const out = new Map<string, number>();
   if (withRhr.length === 0) return out;
 
+  // Components score 50 at the group average (nobody is pinned to 100).
   const rhrs = withRhr.map((e) => e.rhr!);
   const vo2s = entries.filter((e) => e.vo2 != null).map((e) => e.vo2!);
-  const norm = (v: number, min: number, max: number) =>
-    max === min ? 50 : ((v - min) / (max - min)) * 100;
-  const [rhrMin, rhrMax] = [Math.min(...rhrs), Math.max(...rhrs)];
-  const [vo2Min, vo2Max] = vo2s.length ? [Math.min(...vo2s), Math.max(...vo2s)] : [0, 0];
+  const rhrMean = rhrs.reduce((a, b) => a + b, 0) / rhrs.length;
+  const vo2Mean = vo2s.length ? vo2s.reduce((a, b) => a + b, 0) / vo2s.length : 0;
+  const clamp = (v: number) => Math.max(5, Math.min(100, v));
 
   for (const e of withRhr) {
-    const rhrScore = 100 - norm(e.rhr!, rhrMin, rhrMax); // lower HR = higher score
+    const rhrScore = clamp((rhrMean / e.rhr!) * 50); // lower HR = higher score
     if (e.vo2 != null && vo2s.length > 1) {
-      out.set(e.userId, Math.round(0.6 * rhrScore + 0.4 * norm(e.vo2, vo2Min, vo2Max)));
+      out.set(e.userId, Math.round(0.6 * rhrScore + 0.4 * clamp((e.vo2 / vo2Mean) * 50)));
     } else {
       out.set(e.userId, Math.round(rhrScore));
     }
