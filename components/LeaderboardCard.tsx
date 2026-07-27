@@ -18,11 +18,11 @@ export function accentFor(key?: string) {
 
 function Delta({ delta }: { delta: number | null }) {
   if (delta == null || delta === 0) {
-    return <span className="w-8 text-right text-xs text-faint">–</span>;
+    return <span className="w-5 text-right text-xs text-faint">–</span>;
   }
   const up = delta > 0;
   return (
-    <span className={`w-8 text-right font-num text-xs font-semibold ${up ? "text-forest" : "text-brick"}`}>
+    <span className={`w-5 text-right font-num text-xs font-semibold ${up ? "text-forest" : "text-brick"}`}>
       {up ? "▲" : "▼"}{Math.abs(delta)}
     </span>
   );
@@ -50,12 +50,14 @@ export function EntryRow({
   const leader = entry.rank === 1;
   return (
     <li className={`rounded-xl px-2.5 ${leader ? "bg-white/5 py-2.5" : isLast ? "bg-brick/10 py-2" : "py-2"}`}>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <span className={`w-6 shrink-0 text-center font-num text-sm font-semibold ${leader ? "text-ink" : "text-faint"}`}>
           {entry.rank}
         </span>
         <Avatar name={entry.displayName} charm={entry.avatarEmoji} size={leader ? 36 : 30} ring={leader} />
-        <span className={`shrink truncate ${leader ? "font-display text-[15px] font-semibold text-ink" : "text-sm font-medium text-sub"}`}>
+        <span
+          className={`min-w-[3.5rem] flex-1 truncate ${leader ? "font-display text-[15px] font-semibold text-ink" : "text-sm font-medium text-sub"}`}
+        >
           {entry.displayName}
         </span>
         {isLast && (
@@ -63,7 +65,6 @@ export function EntryRow({
             red lantern
           </span>
         )}
-        <span className="flex-1" />
         <span
           className={`shrink-0 font-num font-bold tabular-nums ${leader ? "text-2xl" : "text-base"}`}
           style={{ color: isLast ? "#FF0026" : valueColor(boardKey, entry, leader ? accent.hex : "#FFFFFF") }}
