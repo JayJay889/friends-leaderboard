@@ -1,5 +1,5 @@
 import Avatar from "./Avatar";
-import Ring, { bandColor } from "./Ring";
+import Ring from "./Ring";
 import type { Board, BoardEntry } from "@/lib/leaderboards";
 
 // WHOOP metric colors per pillar (recovery scores are additionally band-colored).
@@ -28,11 +28,16 @@ function Delta({ delta }: { delta: number | null }) {
   );
 }
 
-/** Value color: recovery-style boards band their scores WHOOP-style. */
+/** WHOOP-style bands on the index scale (100 = group average). */
+function indexBand(n: number): string {
+  return n >= 110 ? "#16EC06" : n >= 90 ? "#FFDE00" : "#FF0026";
+}
+
+/** Value color: recovery scores band on the index scale. */
 function valueColor(boardKey: string | undefined, entry: BoardEntry, fallback: string): string {
   if (boardKey === "recovery") {
     const n = parseInt(entry.display, 10);
-    if (!Number.isNaN(n)) return bandColor(n);
+    if (!Number.isNaN(n)) return indexBand(n);
   }
   return fallback;
 }
@@ -107,9 +112,11 @@ export default function LeaderboardCard({
       ? Math.min(100, (leader.score / STRAIN_WEEKLY_TARGET) * 100)
       : board.key === "age"
         ? Math.max(0, Math.min(100, ((AGE_MAX + leader.score) / (AGE_MAX - AGE_MIN)) * 100))
-        : Math.max(0, Math.min(100, parseInt(leader.display, 10) || 0));
+        : board.key === "recovery" || board.key === "health"
+          ? Math.max(0, Math.min(100, (parseInt(leader.display, 10) || 0) / 2)) // index: 200 = full
+          : Math.max(0, Math.min(100, parseInt(leader.display, 10) || 0));
   const ringColor =
-    board.key === "recovery" && leader ? bandColor(parseInt(leader.display, 10) || 0) : accent.hex;
+    board.key === "recovery" && leader ? indexBand(parseInt(leader.display, 10) || 0) : accent.hex;
 
   return (
     <section className="card-lift rounded-2xl border border-hairline bg-card p-4 shadow-card">

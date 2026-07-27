@@ -87,12 +87,11 @@ function buildBoardScores(users: User[], rowsByUser: Map<string, DailyMetricRow[
     if (s.avgSleepScore != null) sleep.push({ userId: u.id, score: s.avgSleepScore, display: `${Math.round(s.avgSleepScore)}` });
     if (s.avgHrv != null) recovery.push({ userId: u.id, score: s.avgHrv, display: "" });
   }
-  // Privacy: never show raw HRV — display a score relative to the group average
-  // (100 = double the group mean). Ordering is unchanged; nobody is pinned to 100.
+  // Privacy: never show raw HRV — display an index where 100 = group average.
   if (recovery.length > 0) {
     const mean = recovery.reduce((a, e) => a + e.score, 0) / recovery.length;
     for (const e of recovery) {
-      e.display = `${Math.max(5, Math.min(100, Math.round((e.score / mean) * 50)))}%`;
+      e.display = `${Math.max(10, Math.min(200, Math.round((e.score / mean) * 100)))}`;
     }
   }
 
@@ -198,8 +197,8 @@ export function compositeScores(
 const BOARD_META = [
   { key: "strain", title: "Strain", emoji: "🔥", subtitle: "Active Zone Minutes · 7 days" },
   { key: "sleep", title: "Sleep", emoji: "😴", subtitle: "Sleep score · 7 days" },
-  { key: "recovery", title: "Recovery", emoji: "🧘", subtitle: "HRV vs the group · 7 days" },
-  { key: "health", title: "Health", emoji: "❤️", subtitle: "Resting HR + VO₂ max · 7 days" },
+  { key: "recovery", title: "Recovery", emoji: "🧘", subtitle: "HRV index · 100 = group average" },
+  { key: "health", title: "Health", emoji: "❤️", subtitle: "Resting HR + VO₂ max · 100 = group average" },
   { key: "age", title: "Club Age", emoji: "🎂", subtitle: "Youngest body first" },
 ] as const;
 
