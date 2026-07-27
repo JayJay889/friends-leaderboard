@@ -3,15 +3,17 @@ import GroupTrendsCard from "@/components/GroupTrendsCard";
 import LeaderboardCard, { EntryRow } from "@/components/LeaderboardCard";
 import StoryCard from "@/components/StoryCard";
 import { getLeaderboardData } from "@/lib/leaderboards";
+import { getHallOfFame } from "@/lib/seasons";
 import { getGroupTrends } from "@/lib/trends";
 import { currentUserId } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [data, trends] = await Promise.all([
+  const [data, trends, hall] = await Promise.all([
     getLeaderboardData(currentUserId()),
     getGroupTrends(),
+    getHallOfFame(),
   ]);
 
   if (!data) {
@@ -60,6 +62,22 @@ export default async function HomePage() {
           </ol>
         )}
       </section>
+
+      {/* Semester championship strip */}
+      {hall && hall.tally[0] && (
+        <Link
+          href="/hall"
+          className="flex items-center justify-between gap-3 rounded-2xl border border-brass-soft/40 bg-card px-5 py-3 shadow-card transition-colors hover:bg-ivory"
+        >
+          <span className="text-sm text-sub">
+            <span className="font-display text-lg font-bold text-neon-gold">♛</span>{" "}
+            <span className="font-semibold text-ink">{hall.tally[0].displayName}</span> leads the{" "}
+            {hall.semesterName} championship with {hall.tally[0].crowns}{" "}
+            {hall.tally[0].crowns === 1 ? "crown" : "crowns"}
+          </span>
+          <span className="label-caps shrink-0">Hall of Fame →</span>
+        </Link>
+      )}
 
       {/* Weekly narrative + group trends */}
       <StoryCard story={data.story} />

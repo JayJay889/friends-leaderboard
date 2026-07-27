@@ -2,6 +2,7 @@ import Avatar from "@/components/Avatar";
 import LeaderboardCard, { RankBadge } from "@/components/LeaderboardCard";
 import TvRotator from "@/components/TvRotator";
 import { getLeaderboardData, type BoardEntry, type StoryPerson } from "@/lib/leaderboards";
+import { formatWeek, getHallOfFame } from "@/lib/seasons";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,7 @@ export default async function TvPage({
 }: {
   searchParams: { interval?: string; top?: string };
 }) {
-  const data = await getLeaderboardData();
+  const [data, hall] = await Promise.all([getLeaderboardData(), getHallOfFame()]);
   const intervalSec = Math.max(5, Number(searchParams.interval) || 20);
   const top = Math.min(10, Math.max(3, Number(searchParams.top) || 5));
 
@@ -220,11 +221,46 @@ export default async function TvPage({
     </div>
   );
 
-  return (
-    <TvRotator
-      slides={[podium, boards, movers]}
-      titles={["The Podium", "The Boards", "The Movers"]}
-      intervalSec={intervalSec}
-    />
+  const championship = hall && (
+    <div className="mx-auto flex h-full max-w-4xl flex-col justify-center">
+      <header className="mb-8 text-center">
+        <p className="label-caps">
+          {hall.semesterName} · {hall.weeksCompleted} {hall.weeksCompleted === 1 ? "week" : "weeks"} decided ·
+          most crowns takes the title
+        </p>
+        <h1 className="mt-2 font-display text-6xl font-bold tracking-tight">The Championship</h1>
+      </header>
+      <ol className="space-y-2">
+        {hall.tally.slice(0, top).map((t, i) => (
+          <li
+            key={t.displayName}
+            className={`flex items-center gap-5 rounded-2xl px-5 ${
+              i === 0 ? "bg-ivory py-4 shadow-glow ring-1 ring-brass-soft/40" : "py-3"
+            }`}
+          >
+            <Avatar name={t.displayName} charm={t.avatarEmoji} size={i === 0 ? 64 : 48} ring={i === 0} />
+            <span className={`min-w-0 flex-1 truncate font-display ${i === 0 ? "text-4xl font-bold text-ink" : "text-2xl text-sub"}`}>
+              {t.displayName}
+            </span>
+            <span className={`font-display font-bold tabular-nums text-neon-gold ${i === 0 ? "text-5xl" : "text-3xl opacity-80"}`}>
+              ♛ {t.crowns}
+            </span>
+          </li>
+        ))}
+      </ol>
+      {hall.weeklyHonors[0] && (
+        <p className="mt-8 text-center text-lg text-sub">
+          Last week ({formatWeek(hall.weeklyHonors[0].weekStart)}):{" "}
+          <span className="font-semibold text-ink">{hall.weeklyHonors[0].person.displayName}</span> took the
+          crown with{" "}
+          <span className="font-display font-bold text-neon-gold">{hall.weeklyHonors[0].points} pts</span>
+        </p>
+      )}
+    </div>
   );
+
+  const slides = [podium, boards, movers, ...(championship ? [championship] : [])];
+  const titles = ["The Podium", "The Boards", "The Movers", ...(championship ? ["The Championship"] : [])];
+
+  return <TvRotator slides={slides} titles={titles} intervalSec={intervalSec} />;
 }

@@ -25,7 +25,7 @@ export interface GroupTrends {
 }
 
 /** ISO date of the Monday of the week containing `isoDate`. */
-function mondayOf(isoDate: string): string {
+export function mondayOf(isoDate: string): string {
   const d = new Date(`${isoDate}T00:00:00Z`);
   const shift = (d.getUTCDay() + 6) % 7; // Mon=0 … Sun=6
   d.setUTCDate(d.getUTCDate() - shift);

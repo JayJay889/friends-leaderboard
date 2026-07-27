@@ -156,6 +156,39 @@ function selfDetails(stats: ReturnType<typeof windowStats>): Record<string, stri
   return { steps: null, workouts: null, ...parts };
 }
 
+/**
+ * "Healthiest Human" composite for an arbitrary window: mean percentile across
+ * boards with data, min 3 boards. Shared by the live page and the Hall of Fame's
+ * weekly-champion computation so a crown means exactly what the board means.
+ */
+export function compositeScores(
+  users: User[],
+  rowsByUser: Map<string, DailyMetricRow[]>,
+): (StoryPerson & { userId: string; score: number })[] {
+  const scores = buildBoardScores(users, rowsByUser);
+  const userById = new Map(users.map((u) => [u.id, u]));
+  const pcts = new Map<string, number[]>();
+  for (const meta of BOARD_META) {
+    for (const [uid, e] of rank(scores[meta.key])) {
+      if (!pcts.has(uid)) pcts.set(uid, []);
+      pcts.get(uid)!.push(rankPercentile(e.rank, e.n));
+    }
+  }
+  const out: (StoryPerson & { userId: string; score: number })[] = [];
+  for (const [uid, ps] of pcts) {
+    if (ps.length < 3) continue;
+    const u = userById.get(uid);
+    if (!u) continue;
+    out.push({
+      userId: uid,
+      displayName: u.displayName,
+      avatarEmoji: u.avatarEmoji,
+      score: ps.reduce((a, b) => a + b, 0) / ps.length,
+    });
+  }
+  return out.sort((a, b) => b.score - a.score);
+}
+
 const BOARD_META = [
   { key: "steps", title: "Steps", emoji: "👟", subtitle: "Avg daily steps, last 7 days" },
   { key: "workouts", title: "Workouts", emoji: "🔥", subtitle: "Active Zone Minutes, last 7 days" },
@@ -204,7 +237,6 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
     : null;
 
   const boards: Board[] = [];
-  const percentiles = new Map<string, number[]>();
 
   for (const meta of BOARD_META) {
     const curr = rank(current[meta.key]);
@@ -225,34 +257,23 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
         delta: prevRank == null ? null : prevRank - r.rank,
         prevRank,
       });
-      if (!percentiles.has(userId)) percentiles.set(userId, []);
-      percentiles.get(userId)!.push(rankPercentile(r.rank, r.n));
     }
     entries.sort((a, b) => a.rank - b.rank);
     boards.push({ ...meta, entries });
   }
 
   // Composite "Healthiest Human": mean percentile across boards with data, min 3 boards.
-  const composite: BoardEntry[] = [];
-  for (const [userId, ps] of percentiles) {
-    if (ps.length < 3) continue;
-    const u = userById.get(userId);
-    if (!u) continue;
-    const score = ps.reduce((a, b) => a + b, 0) / ps.length;
-    composite.push({
-      userId,
-      displayName: u.displayName,
-      avatarEmoji: u.avatarEmoji,
-      rank: 0,
-      display: `${Math.round(score * 100)} pts`,
-      selfDetail: null,
-      score,
-      delta: null,
-      prevRank: null,
-    });
-  }
-  composite.sort((a, b) => b.score - a.score);
-  composite.forEach((e, i) => (e.rank = i + 1));
+  const composite: BoardEntry[] = compositeScores(users, rowsByUser).map((c, i) => ({
+    userId: c.userId,
+    displayName: c.displayName,
+    avatarEmoji: c.avatarEmoji,
+    rank: i + 1,
+    display: `${Math.round(c.score * 100)} pts`,
+    selfDetail: null,
+    score: c.score,
+    delta: null,
+    prevRank: null,
+  }));
 
   return {
     boards,
