@@ -47,15 +47,36 @@ function Delta({ delta }: { delta: number | null }) {
   );
 }
 
-export function EntryRow({ entry, accentText = GOLD.text }: { entry: BoardEntry; accentText?: string }) {
+export function EntryRow({
+  entry,
+  accentText = GOLD.text,
+  isLast = false,
+}: {
+  entry: BoardEntry;
+  accentText?: string;
+  isLast?: boolean;
+}) {
   const leader = entry.rank === 1;
   return (
-    <li className={leader ? "-mx-2 rounded-xl bg-ivory px-2 py-2.5" : "py-2"}>
+    <li
+      className={
+        leader
+          ? "-mx-2 rounded-xl bg-ivory px-2 py-2.5"
+          : isLast
+            ? "-mx-2 rounded-xl border border-brick/25 bg-brick/5 px-2 py-2"
+            : "py-2"
+      }
+    >
       <div className="flex items-center gap-3">
         <RankBadge rank={entry.rank} />
         <Avatar name={entry.displayName} charm={entry.avatarEmoji} size={leader ? 38 : 34} ring={leader} />
-        <span className={`flex-1 truncate ${leader ? "font-semibold text-ink" : "font-medium text-sub"}`}>
+        <span className={`min-w-0 flex-1 truncate ${leader ? "font-semibold text-ink" : "font-medium text-sub"}`}>
           {entry.displayName}
+          {isLast && (
+            <span className="label-caps ml-2 rounded-full border border-brick/40 px-2 py-0.5 !text-[9px] text-brick">
+              red lantern
+            </span>
+          )}
         </span>
         <span
           className={`font-display font-bold tabular-nums ${accentText} ${leader ? "text-2xl" : "text-lg opacity-80"}`}
@@ -89,7 +110,12 @@ export default function LeaderboardCard({ board }: { board: Board }) {
       ) : (
         <ol className="divide-y divide-hairline/60">
           {board.entries.map((e) => (
-            <EntryRow key={e.userId} entry={e} accentText={accent.text} />
+            <EntryRow
+              key={e.userId}
+              entry={e}
+              accentText={accent.text}
+              isLast={board.entries.length >= 3 && e.rank === board.entries.length}
+            />
           ))}
         </ol>
       )}

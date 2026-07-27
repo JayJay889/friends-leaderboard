@@ -51,7 +51,11 @@ export default async function HomePage() {
         ) : (
           <ol className="divide-y divide-hairline/60">
             {data.composite.map((e) => (
-              <EntryRow key={e.userId} entry={e} />
+              <EntryRow
+                key={e.userId}
+                entry={e}
+                isLast={data.composite.length >= 3 && e.rank === data.composite.length}
+              />
             ))}
           </ol>
         )}
