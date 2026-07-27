@@ -99,18 +99,17 @@ export default function LeaderboardCard({
   const hiddenCount = capped ? all.length - visible.length - (lantern ? 1 : 0) : 0;
 
   const leader = all[0];
-  const maxScore = leader ? Math.max(...all.map((e) => e.score)) : 0;
-  // Ring fill: score-boards fill with the score itself; open-ended boards
-  // (strain) fill relative to the leader. Age is rank-only — no ring.
-  const ringValue =
-    leader == null
-      ? 0
-      : board.key === "strain"
-        ? 100
-        : Math.max(0, Math.min(100, parseInt(leader.display, 10) || (maxScore ? (leader.score / maxScore) * 100 : 0)));
-  const ringColor =
-    board.key === "recovery" && leader ? bandColor(parseInt(leader.display, 10) || 0) : accent.hex;
-  const showRing = leader != null && board.key !== "age";
+  // Rings only where the fill is meaningful: sleep (absolute 0-100 score) and
+  // strain (fills toward a weekly target). Group-normalized boards would pin
+  // the leader's ring at 100 by definition — those render as lists instead.
+  const STRAIN_WEEKLY_TARGET = 500; // Active Zone Minutes
+  const showRing = leader != null && (board.key === "strain" || board.key === "sleep");
+  const ringValue = !leader
+    ? 0
+    : board.key === "strain"
+      ? Math.min(100, (leader.score / STRAIN_WEEKLY_TARGET) * 100)
+      : Math.max(0, Math.min(100, parseInt(leader.display, 10) || 0));
+  const ringColor = accent.hex;
 
   return (
     <section className="card-lift rounded-2xl border border-hairline bg-card p-4 shadow-card">
@@ -157,6 +156,11 @@ export default function LeaderboardCard({
             )}
             {lantern && <EntryRow entry={lantern} boardKey={board.key} isLast />}
           </ol>
+          {board.key === "age" && !all.some((e) => e.display || e.selfDetail) && (
+            <p className="mt-2 px-1 text-xs text-faint">
+              Ages are private — sign in and yours appears on your row.
+            </p>
+          )}
         </>
       )}
     </section>

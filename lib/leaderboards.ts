@@ -201,7 +201,7 @@ const BOARD_META = [
   { key: "sleep", title: "Sleep", emoji: "😴", subtitle: "Our own sleep score — duration, stages & efficiency" },
   { key: "recovery", title: "Recovery", emoji: "🧘", subtitle: "7-day avg HRV, scored within the group — a proxy, not medical" },
   { key: "health", title: "Health", emoji: "❤️", subtitle: "Resting heart rate + VO₂ max, scored within the group" },
-  { key: "age", title: "Club Age", emoji: "🎂", subtitle: "Youngest body first — playful estimate, ranks only, your number stays private" },
+  { key: "age", title: "Club Age", emoji: "🎂", subtitle: "Youngest body first — playful estimate; only you can see your own number" },
 ] as const;
 
 export async function getLeaderboardData(viewerUserId?: string | null): Promise<LeaderboardData | null> {
@@ -239,9 +239,9 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
   const current = buildBoardScores(users, rowsByUser);
   const previous = buildBoardScores(users, prevByUser);
   const userById = new Map(users.map((u) => [u.id, u]));
-  const viewerDetails = viewerUserId
-    ? selfDetails(windowStats(rowsByUser.get(viewerUserId) ?? []))
-    : null;
+  const viewerStats = viewerUserId ? windowStats(rowsByUser.get(viewerUserId) ?? []) : null;
+  const viewerDetails = viewerStats ? selfDetails(viewerStats) : null;
+  const viewerAge = viewerStats ? clubAge(viewerStats) : null;
 
   const boards: Board[] = [];
 
@@ -258,7 +258,11 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
         displayName: u.displayName,
         avatarEmoji: u.avatarEmoji,
         rank: r.rank,
-        display: r.display,
+        // Your own Club Age shows as the row value — only ever to you.
+        display:
+          meta.key === "age" && userId === viewerUserId && viewerAge != null
+            ? `${viewerAge} yrs`
+            : r.display,
         selfDetail: userId === viewerUserId ? viewerDetails?.[meta.key] ?? null : null,
         score: r.score,
         delta: prevRank == null ? null : prevRank - r.rank,
