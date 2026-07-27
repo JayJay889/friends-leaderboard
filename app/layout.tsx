@@ -32,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </Link>
           <nav className="flex items-center gap-5 pb-1 text-sm text-sub">
             <Link href="/" className="hover:text-ink">Boards</Link>
+            <Link href="/tv" className="hover:text-ink">TV</Link>
             {loggedIn ? (
               <Link href="/me" className="hover:text-ink">Me</Link>
             ) : (
