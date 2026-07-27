@@ -23,11 +23,11 @@ function ChangeBadge({ pct }: { pct: number | null }) {
 export default function GroupTrendsCard({ trends }: { trends: GroupTrends }) {
   const weeksShown = trends.weekStarts.length;
   return (
-    <section>
-      <header className="mb-4 flex flex-wrap items-end justify-between gap-2 border-b-2 border-ink pb-1.5">
+    <section className="rounded-2xl border border-hairline bg-card p-5 shadow-card">
+      <header className="mb-4 flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h2 className="font-display text-2xl font-semibold">Group Pulse</h2>
-          <p className="label-caps mt-0.5">
+          <h2 className="text-lg font-semibold tracking-tight">Group Pulse</h2>
+          <p className="mt-0.5 text-xs text-faint">
             Weekly group averages · last {weeksShown} {weeksShown === 1 ? "week" : "weeks"}
           </p>
         </div>
@@ -53,7 +53,7 @@ export default function GroupTrendsCard({ trends }: { trends: GroupTrends }) {
             }
           >
             <div className="mb-1.5 flex items-center justify-between gap-2">
-              <h3 className="label-caps">{s.label}</h3>
+              <h3 className="text-xs font-semibold text-sub">{s.label}</h3>
               <ChangeBadge pct={s.changePct} />
             </div>
             <Sparkline values={s.values} width={190} height={40} formatValue={s.format} />

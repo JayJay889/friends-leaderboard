@@ -1,6 +1,7 @@
 import Link from "next/link";
 import GroupTrendsCard from "@/components/GroupTrendsCard";
 import LeaderboardCard, { EntryRow } from "@/components/LeaderboardCard";
+import Podium from "@/components/Podium";
 import StoryCard from "@/components/StoryCard";
 import { getLeaderboardData } from "@/lib/leaderboards";
 import { getHallOfFame } from "@/lib/seasons";
@@ -33,33 +34,39 @@ export default async function HomePage() {
   return (
     <div className="space-y-6">
       {data.demo && (
-        <p className="border-y border-hairline py-1.5 text-center text-xs text-brick">
-          Demo edition — showing fake friends. Set DEMO_MODE=0 once real data flows.
+        <p className="rounded-lg border border-brass-soft/30 bg-brass-wash py-1.5 text-center text-xs font-medium text-brass">
+          Demo mode — showing fake friends. Set DEMO_MODE=0 once real data flows.
         </p>
       )}
 
-      {/* Composite hero */}
-      <section>
-        <header className="mb-3 text-center">
-          <h1 className="font-display text-4xl font-bold tracking-tight">The Healthiest Human</h1>
-          <p className="label-caps mt-1.5">
+      {/* Composite hero: the podium */}
+      <section className="rounded-2xl border border-hairline bg-card p-6 pb-0 shadow-card">
+        <header className="mb-5 text-center">
+          <h1 className="text-3xl font-semibold tracking-tight">The Healthiest Human</h1>
+          <p className="mt-1 text-xs text-faint">
             Mean percentile across all boards · min 3 boards · {data.windowLabel.toLowerCase()}
           </p>
         </header>
         {data.composite.length === 0 ? (
-          <p className="py-4 text-center text-sm text-sub">
+          <p className="pb-6 text-center text-sm text-sub">
             Nobody qualifies yet — sync data on at least 3 boards to enter the running.
           </p>
         ) : (
-          <ol className="mx-auto max-w-2xl">
-            {data.composite.map((e) => (
-              <EntryRow
-                key={e.userId}
-                entry={e}
-                isLast={data.composite.length >= 3 && e.rank === data.composite.length}
-              />
-            ))}
-          </ol>
+          <>
+            <Podium entries={data.composite} />
+            {data.composite.length > 3 && (
+              <ol className="mx-auto max-w-xl py-4">
+                {data.composite.slice(3).map((e) => (
+                  <EntryRow
+                    key={e.userId}
+                    entry={e}
+                    isLast={data.composite.length >= 3 && e.rank === data.composite.length}
+                  />
+                ))}
+              </ol>
+            )}
+            {data.composite.length <= 3 && <div className="pb-6" />}
+          </>
         )}
       </section>
 
@@ -67,15 +74,14 @@ export default async function HomePage() {
       {hall && hall.tally[0] && (
         <Link
           href="/hall"
-          className="flex items-center justify-center gap-3 border-y border-hairline py-2 text-sm text-sub transition-colors hover:text-ink"
+          className="flex flex-wrap items-center justify-center gap-2 rounded-xl border border-hairline bg-card px-5 py-2.5 text-sm text-sub shadow-card transition-colors hover:text-ink"
         >
           <span>
-            <span className="font-display font-bold text-brass">♛</span>{" "}
-            <span className="font-semibold text-ink">{hall.tally[0].displayName}</span> leads the{" "}
+            <span className="font-semibold text-brass">♛</span> <span className="font-semibold text-ink">{hall.tally[0].displayName}</span> leads the{" "}
             {hall.semesterName} championship with {hall.tally[0].crowns}{" "}
             {hall.tally[0].crowns === 1 ? "crown" : "crowns"}
           </span>
-          <span className="label-caps shrink-0">Hall of Fame →</span>
+          <span className="shrink-0 font-semibold text-brass">Hall of Fame →</span>
         </Link>
       )}
 

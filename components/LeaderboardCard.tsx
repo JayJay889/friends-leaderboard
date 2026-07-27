@@ -1,27 +1,28 @@
 import Avatar from "./Avatar";
 import type { Board, BoardEntry } from "@/lib/leaderboards";
 
-const ROMAN: Record<string, string> = {
-  steps: "I",
-  workouts: "II",
-  sleep: "III",
-  health: "IV",
-  calm: "V",
+// One accent per board: dot + numbers + leader wash. Cards stay white.
+const ACCENT: Record<string, { text: string; dot: string; wash: string }> = {
+  steps: { text: "text-neon-lime", dot: "bg-neon-lime", wash: "bg-wash-lime" },
+  workouts: { text: "text-neon-coral", dot: "bg-neon-coral", wash: "bg-wash-coral" },
+  sleep: { text: "text-neon-violet", dot: "bg-neon-violet", wash: "bg-wash-violet" },
+  health: { text: "text-neon-pink", dot: "bg-neon-pink", wash: "bg-wash-pink" },
+  calm: { text: "text-neon-cyan", dot: "bg-neon-cyan", wash: "bg-wash-cyan" },
 };
+const GOLD = { text: "text-brass", dot: "bg-brass", wash: "bg-brass-wash" };
 
-// Kept for compatibility: value color only. Boards print in ink, composite in gold.
 export function accentFor(key?: string) {
-  return { text: key ? "text-ink" : "text-brass" };
+  return (key && ACCENT[key]) || GOLD;
 }
 
 function Delta({ delta }: { delta: number | null }) {
   if (delta == null || delta === 0) {
-    return <span className="w-8 text-right text-xs text-faint">·</span>;
+    return <span className="w-8 text-right text-xs text-faint">–</span>;
   }
   const up = delta > 0;
   return (
     <span className={`w-8 text-right text-xs font-semibold ${up ? "text-forest" : "text-brick"}`}>
-      {up ? "▲" : "▼"}{Math.abs(delta)}
+      {up ? "↑" : "↓"}{Math.abs(delta)}
     </span>
   );
 }
@@ -29,39 +30,38 @@ function Delta({ delta }: { delta: number | null }) {
 export function EntryRow({
   entry,
   accentText = "text-brass",
+  accentWash = "bg-brass-wash",
   isLast = false,
 }: {
   entry: BoardEntry;
   accentText?: string;
+  accentWash?: string;
   isLast?: boolean;
 }) {
   const leader = entry.rank === 1;
   return (
-    <li className={leader ? "py-2.5" : "py-1.5"}>
-      <div className="flex items-center gap-2.5">
-        <span className={`w-7 shrink-0 text-right font-display ${leader ? "text-lg font-semibold" : "text-sm text-faint"}`}>
-          {entry.rank}.
+    <li className={`rounded-xl px-2.5 ${leader ? `${accentWash} py-2.5` : isLast ? "bg-brick/5 py-2" : "py-2"}`}>
+      <div className="flex items-center gap-3">
+        <span className={`w-6 shrink-0 text-center text-sm font-semibold tabular-nums ${leader ? accentText : "text-faint"}`}>
+          {entry.rank}
         </span>
-        <Avatar name={entry.displayName} charm={entry.avatarEmoji} size={leader ? 36 : 28} ring={leader} />
-        <span className={`shrink truncate ${leader ? "font-display text-xl font-semibold text-ink" : "text-[15px] text-sub"}`}>
-          {leader && <span className="mr-1.5 text-brass">♛</span>}
+        <Avatar name={entry.displayName} charm={entry.avatarEmoji} size={leader ? 36 : 30} ring={leader} />
+        <span className={`shrink truncate ${leader ? "text-[15px] font-semibold text-ink" : "text-sm font-medium text-sub"}`}>
           {entry.displayName}
         </span>
         {isLast && (
-          <span className="label-caps shrink-0 !text-[9px] !text-brick">red lantern</span>
+          <span className="shrink-0 rounded-full bg-brick/10 px-2 py-0.5 text-[10px] font-semibold text-brick">
+            red lantern
+          </span>
         )}
-        <span className="dotlead" />
-        <span
-          className={`shrink-0 font-display font-bold tabular-nums ${
-            isLast ? "text-brick" : accentText
-          } ${leader ? "text-2xl" : "text-base"}`}
-        >
+        <span className="flex-1" />
+        <span className={`shrink-0 font-semibold tabular-nums tracking-tight ${isLast ? "text-brick" : accentText} ${leader ? "text-xl" : "text-sm"}`}>
           {entry.display}
         </span>
         <Delta delta={entry.delta} />
       </div>
       {entry.selfDetail && (
-        <p className="ml-[4.7rem] text-xs text-faint">
+        <p className="ml-[4.7rem] pb-0.5 text-xs text-faint">
           you: <span className="tabular-nums text-sub">{entry.selfDetail}</span>
         </p>
       )}
@@ -77,6 +77,7 @@ export default function LeaderboardCard({
   /** Cap the list to the top N; the red-lantern row stays pinned after an ellipsis. */
   maxEntries?: number;
 }) {
+  const accent = accentFor(board.key);
   const all = board.entries;
   const hasLantern = all.length >= 3;
   const capped = maxEntries != null && all.length > maxEntries;
@@ -85,34 +86,33 @@ export default function LeaderboardCard({
   const hiddenCount = capped ? all.length - visible.length - (lantern ? 1 : 0) : 0;
 
   return (
-    <section>
-      <header className="border-b-2 border-ink pb-1.5">
-        <div className="flex items-baseline justify-between gap-3">
-          <h2 className="font-display text-2xl font-semibold">
-            <span className="mr-2 text-base text-faint">{ROMAN[board.key] ?? "·"}.</span>
-            {board.title}
-          </h2>
+    <section className="rounded-2xl border border-hairline bg-card p-4 shadow-card">
+      <header className="mb-2 px-1">
+        <div className="flex items-center gap-2">
+          <span className={`h-2.5 w-2.5 rounded-full ${accent.dot}`} />
+          <h2 className="text-lg font-semibold tracking-tight">{board.title}</h2>
         </div>
-        <p className="label-caps mt-0.5">{board.subtitle}</p>
+        <p className="mt-0.5 text-xs text-faint">{board.subtitle}</p>
       </header>
       {all.length === 0 ? (
-        <p className="py-5 text-center text-sm text-faint">No entries yet — the board awaits.</p>
+        <p className="py-5 text-center text-sm text-faint">No entries yet.</p>
       ) : (
-        <ol className="pt-1.5">
+        <ol className="divide-y divide-hairline/50">
           {visible.map((e) => (
             <EntryRow
               key={e.userId}
               entry={e}
-              accentText="text-ink"
+              accentText={accent.text}
+              accentWash={accent.wash}
               isLast={hasLantern && e.rank === all.length}
             />
           ))}
           {hiddenCount > 0 && (
-            <li className="py-0.5 text-center text-xs tracking-widest text-faint">
-              ··· {hiddenCount} more ···
-            </li>
+            <li className="py-1 text-center text-xs text-faint">+ {hiddenCount} more</li>
           )}
-          {lantern && <EntryRow entry={lantern} accentText="text-ink" isLast />}
+          {lantern && (
+            <EntryRow entry={lantern} accentText={accent.text} accentWash={accent.wash} isLast />
+          )}
         </ol>
       )}
     </section>

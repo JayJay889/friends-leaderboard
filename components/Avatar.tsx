@@ -1,5 +1,5 @@
 import { createAvatar } from "@dicebear/core";
-import { lorelei } from "@dicebear/collection";
+import { notionists } from "@dicebear/collection";
 
 /**
  * Deterministic line-art portrait (DiceBear "Lorelei", generated locally —
@@ -18,15 +18,14 @@ export default function Avatar({
   size?: number;
   ring?: boolean;
 }) {
-  const svg = createAvatar(lorelei, {
+  const svg = createAvatar(notionists, {
     seed: `${name}·${charm}`,
-    backgroundColor: [],
+    backgroundColor: ["f3f3f0"],
   }).toString();
 
-  // Slightly-lighter-than-paper medallion so the line-art reads on the page.
   return (
     <span
-      className={`inline-block shrink-0 overflow-hidden rounded-full bg-[#FBF7EC] ${
+      className={`inline-block shrink-0 overflow-hidden rounded-full ${
         ring ? "ring-2 ring-brass-soft" : "ring-1 ring-hairline"
       }`}
       style={{ width: size, height: size }}
