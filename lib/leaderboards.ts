@@ -1,7 +1,7 @@
 import { and, gte, lt } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { DailyMetricRow, User } from "@/db/schema";
-import { healthScores, rankPercentile, windowStats } from "./scores";
+import { clubAge, healthScores, rankPercentile, windowStats } from "./scores";
 import { demoData } from "./demo";
 
 export interface BoardEntry {
@@ -111,7 +111,15 @@ function buildBoardScores(users: User[], rowsByUser: Map<string, DailyMetricRow[
     health.push({ userId, score, display: `${score} pts` });
   }
 
-  return { steps, workouts, sleep, health, calm };
+  // Club Age: ranked youngest-first; the number itself stays private
+  // (rank-only display — owners see theirs via selfDetail).
+  const age: RawBoard = [];
+  for (const u of users) {
+    const a = clubAge(stats.get(u.id)!);
+    if (a != null) age.push({ userId: u.id, score: -a, display: "" });
+  }
+
+  return { steps, workouts, sleep, health, calm, age };
 }
 
 function rank(raw: RawBoard): Map<string, { rank: number; display: string; score: number; n: number }> {
@@ -152,6 +160,7 @@ function selfDetails(stats: ReturnType<typeof windowStats>): Record<string, stri
             .join(" · ")
         : null,
     calm: stats.avgHrv != null ? `${Math.round(stats.avgHrv)} ms HRV` : null,
+    age: clubAge(stats) != null ? `body age ${clubAge(stats)}` : null,
   };
   return { steps: null, workouts: null, ...parts };
 }
@@ -195,6 +204,7 @@ const BOARD_META = [
   { key: "sleep", title: "Sleep", emoji: "😴", subtitle: "Our own sleep score — duration, stages & efficiency" },
   { key: "health", title: "Health", emoji: "❤️", subtitle: "Resting heart rate + VO₂ max, scored within the group" },
   { key: "calm", title: "Most Chill", emoji: "🧘", subtitle: "7-day avg HRV — a recovery proxy, not a medical measurement" },
+  { key: "age", title: "Club Age", emoji: "🎂", subtitle: "Youngest body first — playful estimate, ranks only, your number stays private" },
 ] as const;
 
 export async function getLeaderboardData(viewerUserId?: string | null): Promise<LeaderboardData | null> {

@@ -6,7 +6,7 @@ import Sparkline from "@/components/Sparkline";
 import { db, schema } from "@/db";
 import { formatHours, getLeaderboardData } from "@/lib/leaderboards";
 import { SCOPE } from "@/lib/google";
-import { sleepScore, windowStats } from "@/lib/scores";
+import { clubAge, sleepScore, windowStats } from "@/lib/scores";
 import { currentUserId } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -99,6 +99,7 @@ export default async function MePage({
     ["HRV (RMSSD)", week.avgHrv != null ? `${Math.round(week.avgHrv)} ms` : null],
     ["Breathing rate", week.avgBreathingRate != null ? `${week.avgBreathingRate.toFixed(1)} br/min` : null],
     ["VO₂ max", week.avgVo2max != null ? week.avgVo2max.toFixed(1) : null],
+    ["Club Age", clubAge(week) != null ? `${clubAge(week)} yrs` : null],
   ];
 
   return (
@@ -176,7 +177,9 @@ export default async function MePage({
           <p className="text-sm text-faint">No data this week yet — check back after a sync.</p>
         ) : (
           <p className="mt-3 text-xs text-faint">
-            Sleep score = 50% duration (best at 8 h) + 30% deep+REM share (40% = full marks) + 20% efficiency.
+            Sleep score = 50% duration (best at 8 h) + 30% deep+REM share (40% = full marks) + 20%
+            efficiency. Club Age is a playful estimate from VO₂ max, resting HR, HRV, sleep and
+            activity — only you can see the number; the board shows ranks only.
           </p>
         )}
       </section>

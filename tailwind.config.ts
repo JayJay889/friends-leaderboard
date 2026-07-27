@@ -33,6 +33,7 @@ export default {
           violet: "#7C3AED", // sleep
           pink: "#E11D48", // health
           cyan: "#0891B2", // calm
+          indigo: "#4F46E5", // club age
           gold: "#D97706", // composite
         },
         wash: {
@@ -41,6 +42,7 @@ export default {
           violet: "#F5F3FF",
           pink: "#FFF1F2",
           cyan: "#ECFEFF",
+          indigo: "#EEF2FF",
           gold: "#FFFBEB",
         },
       },

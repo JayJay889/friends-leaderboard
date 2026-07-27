@@ -8,6 +8,7 @@ const ACCENT: Record<string, { text: string; dot: string; wash: string }> = {
   sleep: { text: "text-neon-violet", dot: "bg-neon-violet", wash: "bg-wash-violet" },
   health: { text: "text-neon-pink", dot: "bg-neon-pink", wash: "bg-wash-pink" },
   calm: { text: "text-neon-cyan", dot: "bg-neon-cyan", wash: "bg-wash-cyan" },
+  age: { text: "text-neon-indigo", dot: "bg-neon-indigo", wash: "bg-wash-indigo" },
 };
 const GOLD = { text: "text-brass", dot: "bg-brass", wash: "bg-brass-wash" };
 

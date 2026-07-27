@@ -112,6 +112,24 @@ export function healthScores(
   return out;
 }
 
+/**
+ * "Club Age" — a playful body-age estimate (WHOOP-style, heavily simplified).
+ * Anchored on VO₂ max via a rough unisex population decline (~0.4 ml/kg/min
+ * per year from ~45 at age 20), then nudged by resting HR, HRV, sleep score
+ * and weekly activity volume. A wellness toy, not a medical measurement —
+ * requires VO₂ max data, returns null without it.
+ */
+export function clubAge(s: UserWindowStats): number | null {
+  if (s.avgVo2max == null) return null;
+  let age = 20 + (45 - s.avgVo2max) / 0.4;
+  const nudge = (v: number, cap = 3) => Math.max(-cap, Math.min(cap, v));
+  if (s.avgRestingHr != null) age += nudge((s.avgRestingHr - 60) * 0.15);
+  if (s.avgHrv != null) age += nudge((45 - s.avgHrv) * 0.05);
+  if (s.avgSleepScore != null) age += nudge((80 - s.avgSleepScore) * 0.08);
+  if (s.totalAzm != null) age += nudge((150 - s.totalAzm) * 0.005, 2);
+  return Math.round(Math.max(18, Math.min(80, age)));
+}
+
 /** Percentile of a rank within a board: 1st of n → 1.0, last → 0.0, solo → 1.0. */
 export function rankPercentile(rank: number, n: number): number {
   if (n <= 1) return 1;
