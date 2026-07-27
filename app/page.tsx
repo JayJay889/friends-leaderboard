@@ -1,12 +1,18 @@
 import Link from "next/link";
+import GroupTrendsCard from "@/components/GroupTrendsCard";
 import LeaderboardCard, { EntryRow } from "@/components/LeaderboardCard";
+import StoryCard from "@/components/StoryCard";
 import { getLeaderboardData } from "@/lib/leaderboards";
+import { getGroupTrends } from "@/lib/trends";
 import { currentUserId } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const data = await getLeaderboardData(currentUserId());
+  const [data, trends] = await Promise.all([
+    getLeaderboardData(currentUserId()),
+    getGroupTrends(),
+  ]);
 
   if (!data) {
     return (
@@ -51,6 +57,10 @@ export default async function HomePage() {
           </ol>
         )}
       </section>
+
+      {/* Weekly narrative + group trends */}
+      <StoryCard story={data.story} />
+      {trends && <GroupTrendsCard trends={trends} />}
 
       {/* Five boards */}
       <div className="grid gap-6 sm:grid-cols-2">

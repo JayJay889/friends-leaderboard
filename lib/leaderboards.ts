@@ -15,6 +15,28 @@ export interface BoardEntry {
   selfDetail: string | null;
   score: number; // sort key, higher = better
   delta: number | null; // previous-window rank minus current rank (positive = climbed)
+  prevRank: number | null;
+}
+
+export interface StoryPerson {
+  displayName: string;
+  avatarEmoji: string;
+}
+
+export interface Overtake {
+  boardTitle: string;
+  boardEmoji: string;
+  winner: StoryPerson;
+  loser: StoryPerson;
+}
+
+/** The week's narrative: who rules, who trails, who's on the move. */
+export interface WeeklyStory {
+  champion: (StoryPerson & { points: string }) | null;
+  lantern: StoryPerson | null; // composite last place (needs ≥3 people)
+  overtakes: Overtake[];
+  climber: (StoryPerson & { spots: number }) | null;
+  slider: (StoryPerson & { spots: number }) | null;
 }
 
 export interface Board {
@@ -28,6 +50,7 @@ export interface Board {
 export interface LeaderboardData {
   boards: Board[];
   composite: BoardEntry[]; // "Healthiest Human"
+  story: WeeklyStory;
   windowLabel: string;
   demo: boolean;
 }
@@ -189,6 +212,7 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
         selfDetail: userId === viewerUserId ? viewerDetails?.[meta.key] ?? null : null,
         score: r.score,
         delta: prevRank == null ? null : prevRank - r.rank,
+        prevRank,
       });
       if (!percentiles.has(userId)) percentiles.set(userId, []);
       percentiles.get(userId)!.push(rankPercentile(r.rank, r.n));
@@ -213,6 +237,7 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
       selfDetail: null,
       score,
       delta: null,
+      prevRank: null,
     });
   }
   composite.sort((a, b) => b.score - a.score);
@@ -221,7 +246,58 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
   return {
     boards,
     composite,
+    story: buildStory(boards, composite),
     windowLabel: "Rolling 7 days",
     demo: process.env.DEMO_MODE === "1",
+  };
+}
+
+/** Derives the week's narrative from ranked boards + composite. */
+function buildStory(boards: Board[], composite: BoardEntry[]): WeeklyStory {
+  const person = (e: BoardEntry): StoryPerson => ({
+    displayName: e.displayName,
+    avatarEmoji: e.avatarEmoji,
+  });
+
+  // Overtakes: on each board, A now above B but B was above A last week.
+  const overtakes: Overtake[] = [];
+  for (const b of boards) {
+    for (const a of b.entries) {
+      if (a.prevRank == null) continue;
+      for (const o of b.entries) {
+        if (o.prevRank == null || o.rank <= a.rank) continue;
+        if (o.prevRank < a.prevRank) {
+          overtakes.push({
+            boardTitle: b.title,
+            boardEmoji: b.emoji,
+            winner: person(a),
+            loser: person(o),
+          });
+        }
+      }
+    }
+  }
+
+  // Biggest climber / slider: summed rank movement across all boards.
+  const movement = new Map<string, { p: StoryPerson; spots: number }>();
+  for (const b of boards) {
+    for (const e of b.entries) {
+      if (e.delta == null) continue;
+      const m = movement.get(e.userId) ?? { p: person(e), spots: 0 };
+      m.spots += e.delta;
+      movement.set(e.userId, m);
+    }
+  }
+  const moves = [...movement.values()].sort((a, b) => b.spots - a.spots);
+  const climber = moves[0]?.spots > 0 ? { ...moves[0].p, spots: moves[0].spots } : null;
+  const last = moves[moves.length - 1];
+  const slider = last && last.spots < 0 ? { ...last.p, spots: -last.spots } : null;
+
+  return {
+    champion: composite[0] ? { ...person(composite[0]), points: composite[0].display } : null,
+    lantern: composite.length >= 3 ? person(composite[composite.length - 1]) : null,
+    overtakes: overtakes.slice(0, 4),
+    climber,
+    slider,
   };
 }
