@@ -44,6 +44,9 @@ export default function Avatar({
     hairColor: HAIR_COLORS,
     glassesProbability: 45,
     featuresProbability: 15,
+    // A few hair variants are drawn to the frame edge — shrink everything so
+    // even the biggest heads keep a margin inside the circular crop.
+    scale: 80,
     ...(gender === "f" ? { hair: FEMALE_HAIR as never } : {}),
     ...(gender === "m" ? { hair: MALE_HAIR as never } : {}),
   }).toString();
