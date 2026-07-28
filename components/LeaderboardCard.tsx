@@ -112,7 +112,7 @@ export default function LeaderboardCard({
       : board.key === "age"
         ? Math.max(0, Math.min(100, ((AGE_MAX + leader.score) / (AGE_MAX - AGE_MIN)) * 100))
         : board.key === "recovery" || board.key === "health"
-          ? Math.max(0, Math.min(100, (parseInt(leader.display, 10) || 0) / 2)) // index: 200 = full
+          ? Math.max(0, Math.min(100, ((parseInt(leader.display, 10) || 0) / 150) * 100)) // index: 150 = full ring
           : Math.max(0, Math.min(100, parseInt(leader.display, 10) || 0));
   const ringColor =
     board.key === "recovery" && leader ? indexBand(parseInt(leader.display, 10) || 0) : accent.hex;

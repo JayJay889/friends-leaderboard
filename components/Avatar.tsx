@@ -13,7 +13,7 @@ const FEMALE_HEADS = [
 const MEME_FACES = [
   "smileLOL", "smileBig", "smileTeethGap", "cheeky", "awe", "suspicious", "tired",
   "eatingHappy", "hectic", "lovingGrin1", "lovingGrin2", "contempt", "eyesClosed",
-  "driven", "cute", "explaining", "rage",
+  "explaining", "rage",
 ];
 const MALE_HEADS = [
   "short1", "short2", "short3", "short4", "short5", "shaved1", "shaved2", "shaved3",
@@ -42,12 +42,14 @@ export default function Avatar({
   const svg = createAvatar(openPeeps, {
     seed: `${name}·${charm}`,
     backgroundColor: ["ffd5dc", "cdeaf7", "d1f4d9", "ffe6b3", "e6dbff", "ffd9c0", "d9f1ee"],
-    scale: 85,
-    translateY: 4,
-    // Meme-grade uni students: expressive faces only, glasses everywhere.
+    scale: 74,
+    translateY: 6,
+    // Meme-grade uni students: expressive faces only, glasses everywhere,
+    // skin tones matching the actual friend group (mostly light European).
     face: MEME_FACES as never,
-    accessoriesProbability: 45,
+    accessoriesProbability: 60,
     maskProbability: 0,
+    skinColor: ["ffdbb4", "ffdbb4", "edb98a", "edb98a", "d08b5b"],
     ...(gender === "f" ? { head: FEMALE_HEADS as never, facialHairProbability: 0 } : {}),
     ...(gender === "m" ? { head: MALE_HEADS as never, facialHairProbability: 35 } : {}),
   }).toString();
