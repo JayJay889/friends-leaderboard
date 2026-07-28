@@ -54,6 +54,9 @@ export default function Avatar({
     ...(gender === "m" ? { head: MALE_HEADS as never, facialHairProbability: 35 } : {}),
   }).toString();
 
+  // Rendered as an <img> so the square SVG always scales to fill the circle
+  // exactly — inline SVG injection rendered at natural size and got cropped.
+  const uri = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
   return (
     <span
       className={`inline-block shrink-0 overflow-hidden rounded-full ${
@@ -61,7 +64,9 @@ export default function Avatar({
       }`}
       style={{ width: size, height: size }}
       aria-hidden="true"
-      dangerouslySetInnerHTML={{ __html: svg }}
-    />
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={uri} alt="" width={size} height={size} className="block h-full w-full" draggable={false} />
+    </span>
   );
 }
