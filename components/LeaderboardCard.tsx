@@ -150,11 +150,11 @@ export default function LeaderboardCard({
               </Ring>
               <div className="min-w-0">
                 <p className="label-caps">Leader</p>
-                <p className="flex items-center gap-2 truncate font-display text-lg font-semibold text-ink">
+                <p className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
                   {board.key !== "age" && (
                     <Avatar name={leader.displayName} charm={leader.avatarEmoji} size={26} ring />
                   )}
-                  {leader.displayName}
+                  <span className="truncate">{leader.displayName}</span>
                 </p>
                 {board.key === "age" && leader.display && (
                   <p className="font-num text-sm font-semibold text-sub">{leader.display}</p>
