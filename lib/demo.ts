@@ -15,12 +15,13 @@ function lcg(seed: number) {
 }
 
 // `trend` = how much this friend improves (+) or slips (-) over the 10 weeks.
+// Ages 19–30 to demo the Age Defied board (Sam has no birthday entered).
 const FRIENDS = [
-  { name: "Mira", emoji: "🦊", fitness: 0.9, trend: 0.15 },
-  { name: "Jonas", emoji: "🐻", fitness: 0.45, trend: 0.9 }, // comeback story
-  { name: "Lea", emoji: "🦉", fitness: 0.8, trend: -0.5 },
-  { name: "Sam", emoji: "🐸", fitness: 0.4, trend: 0.3 },
-  { name: "Nadia", emoji: "🐬", fitness: 0.65, trend: -0.15 },
+  { name: "Mira", emoji: "🦊", fitness: 0.9, trend: 0.15, birthDate: "1999-03-14" },
+  { name: "Jonas", emoji: "🐻", fitness: 0.45, trend: 0.9, birthDate: "2007-06-02" }, // comeback story
+  { name: "Lea", emoji: "🦉", fitness: 0.8, trend: -0.5, birthDate: "1996-11-23" },
+  { name: "Sam", emoji: "🐸", fitness: 0.4, trend: 0.3, birthDate: null },
+  { name: "Nadia", emoji: "🐬", fitness: 0.65, trend: -0.15, birthDate: "2001-08-30" },
 ];
 
 const DAYS = 70; // 10 weeks
@@ -36,6 +37,7 @@ export function demoData(): {
     displayName: f.name,
     avatarEmoji: f.emoji,
     googleUserId: `demo-google-${i}`,
+    birthDate: f.birthDate,
     createdAt: new Date("2026-05-01T00:00:00Z"),
   }));
 

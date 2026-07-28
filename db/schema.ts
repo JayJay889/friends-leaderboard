@@ -13,6 +13,8 @@ export const users = pgTable("users", {
   displayName: text("display_name").notNull(),
   avatarEmoji: text("avatar_emoji").notNull().default("🐣"),
   googleUserId: text("google_user_id").notNull().unique(),
+  // Optional; powers the Age Defied board (only the body-vs-real difference is public).
+  birthDate: date("birth_date"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

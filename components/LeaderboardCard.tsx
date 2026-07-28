@@ -99,18 +99,15 @@ export default function LeaderboardCard({
   const hiddenCount = capped ? all.length - visible.length - (lantern ? 1 : 0) : 0;
 
   const leader = all[0];
-  // Every board leads with a ring. Strain fills toward a weekly target,
-  // score boards fill with the leader's score (mean-relative, so never pinned),
-  // and Body Age fills with youthfulness while keeping the number private.
-  const AGE_MIN = 18;
-  const AGE_MAX = 80;
+  // Every board leads with a ring. Strain fills toward the 0-21 scale, index
+  // boards fill at 150, Age Defied maps -5..+10 years onto the arc.
   const showRing = leader != null;
   const ringValue = !leader
     ? 0
     : board.key === "strain"
       ? Math.min(100, ((parseFloat(leader.display) || 0) / 21) * 100)
       : board.key === "age"
-        ? Math.max(0, Math.min(100, ((AGE_MAX + leader.score) / (AGE_MAX - AGE_MIN)) * 100))
+        ? Math.max(5, Math.min(100, ((leader.score + 5) / 15) * 100))
         : board.key === "recovery" || board.key === "health"
           ? Math.max(0, Math.min(100, ((parseInt(leader.display, 10) || 0) / 150) * 100)) // index: 150 = full ring
           : Math.max(0, Math.min(100, parseInt(leader.display, 10) || 0));
@@ -126,39 +123,31 @@ export default function LeaderboardCard({
         <p className="mt-1 text-xs text-faint">{board.subtitle}</p>
       </header>
       {all.length === 0 ? (
-        <p className="py-5 text-center text-sm text-faint">No entries yet.</p>
+        <p className="py-5 text-center text-sm text-faint">
+          {board.key === "age"
+            ? "Needs a birthday + a VO₂ max estimate — add yours on your dashboard."
+            : "No entries yet."}
+        </p>
       ) : (
         <>
           {showRing && (
             <div className="mb-2 flex items-center gap-4 px-1 pb-3">
               <Ring value={ringValue} color={ringColor} size={92}>
-                {board.key === "age" ? (
-                  // The number is private — the leader's face fills the ring instead.
-                  <Avatar name={leader.displayName} charm={leader.avatarEmoji} size={64} />
-                ) : (
-                  <>
-                    <span className="font-num text-2xl font-bold tabular-nums text-ink">
-                      {leader.display.split(" ")[0]}
-                    </span>
-                    {leader.display.includes(" ") && (
-                      <span className="text-[10px] text-faint">
-                        {leader.display.split(" ").slice(1).join(" ")}
-                      </span>
-                    )}
-                  </>
+                <span className="font-num text-2xl font-bold tabular-nums text-ink">
+                  {leader.display.split(" ")[0]}
+                </span>
+                {leader.display.includes(" ") && (
+                  <span className="text-[10px] text-faint">
+                    {leader.display.split(" ").slice(1).join(" ")}
+                  </span>
                 )}
               </Ring>
               <div className="min-w-0">
                 <p className="label-caps">Leader</p>
                 <p className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
-                  {board.key !== "age" && (
-                    <Avatar name={leader.displayName} charm={leader.avatarEmoji} size={26} ring />
-                  )}
+                  <Avatar name={leader.displayName} charm={leader.avatarEmoji} size={26} ring />
                   <span className="truncate">{leader.displayName}</span>
                 </p>
-                {board.key === "age" && leader.display && (
-                  <p className="font-num text-sm font-semibold text-sub">{leader.display}</p>
-                )}
               </div>
             </div>
           )}
@@ -171,11 +160,6 @@ export default function LeaderboardCard({
             )}
             {lantern && <EntryRow entry={lantern} boardKey={board.key} isLast />}
           </ol>
-          {board.key === "age" && !all.some((e) => e.display || e.selfDetail) && (
-            <p className="mt-2 px-1 text-xs text-faint">
-              Ages are private — sign in and yours appears on your row.
-            </p>
-          )}
         </>
       )}
     </section>

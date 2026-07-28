@@ -5,7 +5,7 @@ import DisconnectButton from "@/components/DisconnectButton";
 import Ring, { bandColor } from "@/components/Ring";
 import Sparkline from "@/components/Sparkline";
 import { db, schema } from "@/db";
-import { formatHours, getLeaderboardData } from "@/lib/leaderboards";
+import { formatHours, getLeaderboardData, realAge } from "@/lib/leaderboards";
 import { SCOPE } from "@/lib/google";
 import { clubAge, sleepScore, strainScale, windowStats } from "@/lib/scores";
 import { currentUserId } from "@/lib/session";
@@ -138,13 +138,20 @@ export default async function MePage({
     ["Resting HR", week.avgRestingHr != null ? `${Math.round(week.avgRestingHr)} bpm` : null, null],
     ["VO₂ max", week.avgVo2max != null ? week.avgVo2max.toFixed(1) : null, pctDelta(week.avgVo2max, month.avgVo2max)],
     ["Body Age", clubAge(week) != null ? `${clubAge(week)} yrs` : null, null],
+    [
+      "Age Defied",
+      clubAge(week) != null && realAge(user.birthDate) != null
+        ? `${realAge(user.birthDate)! - clubAge(week)! > 0 ? "+" : ""}${realAge(user.birthDate)! - clubAge(week)!} yrs`
+        : null,
+      null,
+    ],
   ];
 
   return (
     <div className="space-y-6">
       {searchParams.welcome && (
         <p className="rounded-xl border border-forest-soft/40 bg-forest-wash px-4 py-3 text-sm text-forest">
-          Welcome to the club. Pick a name below — your data is already on the boards.
+          Welcome to the club. Pick a name and add your birthday below — your data is already on the boards.
         </p>
       )}
 
@@ -238,10 +245,19 @@ export default async function MePage({
             Lucky charm
             <input name="avatarEmoji" defaultValue={user.avatarEmoji} maxLength={8} className={`${inputClass} w-24 text-center`} />
           </label>
+          <label className="text-sm text-sub">
+            Birthday
+            <input
+              type="date"
+              name="birthDate"
+              defaultValue={user.birthDate ?? ""}
+              className={inputClass}
+            />
+          </label>
           <button className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-[#101518] hover:bg-brass-soft">
             Save
           </button>
-          <p className="basis-full text-xs text-faint">Change the charm to re-roll your portrait.</p>
+          <p className="basis-full text-xs text-faint">Charm re-rolls your portrait · birthday powers the Age Defied board (only the difference is public).</p>
         </form>
       </section>
 

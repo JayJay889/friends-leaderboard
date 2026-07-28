@@ -22,7 +22,9 @@ export default function PrivacyPage() {
       <h2 className="font-display text-lg font-semibold text-ink">What we store</h2>
       <p>
         One row per person per day with the daily values above, plus your display name, chosen
-        emoji, and encrypted Google tokens used for syncing. Data lives in a Postgres database
+        emoji, optional birthday (used only to compute the Age Defied difference —
+        neither your birthday nor your real age is shown to the group), and
+        encrypted Google tokens used for syncing. Data lives in a Postgres database
         used only by this app.
       </p>
 

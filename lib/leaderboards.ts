@@ -65,6 +65,15 @@ export interface LeaderboardData {
   demo: boolean;
 }
 
+/** Full years between birth date and today. */
+export function realAge(birthDate: string | null): number | null {
+  if (!birthDate) return null;
+  const b = new Date(`${birthDate}T00:00:00Z`);
+  if (Number.isNaN(b.getTime())) return null;
+  const age = Math.floor((Date.now() - b.getTime()) / (365.2425 * 86_400_000));
+  return age >= 10 && age <= 110 ? age : null;
+}
+
 function isoDaysAgo(days: number): string {
   const d = new Date();
   d.setUTCDate(d.getUTCDate() - days);
@@ -107,12 +116,16 @@ function buildBoardScores(users: User[], rowsByUser: Map<string, DailyMetricRow[
     health.push({ userId, score, display: `${score}` });
   }
 
-  // Body Age: ranked youngest-first; the number itself stays private
-  // (rank-only display — owners see theirs via selfDetail).
+  // Age Defied: years your body is younger than your passport. Needs both a
+  // body-age estimate and a birth date; only the DIFFERENCE is public.
   const age: RawBoard = [];
   for (const u of users) {
-    const a = clubAge(stats.get(u.id)!);
-    if (a != null) age.push({ userId: u.id, score: -a, display: "" });
+    const body = clubAge(stats.get(u.id)!);
+    const real = realAge(u.birthDate);
+    if (body != null && real != null) {
+      const diff = real - body;
+      age.push({ userId: u.id, score: diff, display: `${diff > 0 ? "+" : ""}${diff} yrs` });
+    }
   }
 
   return { strain, sleep, recovery, health, age };
@@ -132,7 +145,10 @@ export function formatHours(minutes: number): string {
 }
 
 /** Raw numbers behind a board's score — shown only to the owner of the row. */
-function selfDetails(stats: ReturnType<typeof windowStats>): Record<string, string | null> {
+function selfDetails(
+  stats: ReturnType<typeof windowStats>,
+  birthDate: string | null,
+): Record<string, string | null> {
   const parts = {
     sleep:
       stats.avgSleepMinutes != null
@@ -156,7 +172,10 @@ function selfDetails(stats: ReturnType<typeof windowStats>): Record<string, stri
             .join(" · ")
         : null,
     recovery: stats.avgHrv != null ? `${Math.round(stats.avgHrv)} ms HRV` : null,
-    age: clubAge(stats) != null ? `body age ${clubAge(stats)}` : null,
+    age:
+      clubAge(stats) != null
+        ? `body ${clubAge(stats)}${realAge(birthDate) != null ? ` · real ${realAge(birthDate)}` : " · add your birthday on Me"}`
+        : null,
   };
   return { strain: null, ...parts };
 }
@@ -199,7 +218,7 @@ const BOARD_META = [
   { key: "sleep", title: "Sleep", emoji: "😴", subtitle: "Who recharged best, night after night" },
   { key: "recovery", title: "Battery", emoji: "🔋", subtitle: "Who\u2019s most recharged right now \u00b7 100 = average" },
   { key: "health", title: "Fitness", emoji: "❤️", subtitle: "Who\u2019s the fittest \u2014 strong heart, big engine \u00b7 100 = average" },
-  { key: "age", title: "Body Age", emoji: "🎂", subtitle: "Youngest body first — an estimate, not your real age" },
+  { key: "age", title: "Age Defied", emoji: "🎂", subtitle: "Years younger than your passport — body age vs real age" },
 ] as const;
 
 export async function getLeaderboardData(viewerUserId?: string | null): Promise<LeaderboardData | null> {
@@ -238,8 +257,8 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
   const previous = buildBoardScores(users, prevByUser);
   const userById = new Map(users.map((u) => [u.id, u]));
   const viewerStats = viewerUserId ? windowStats(rowsByUser.get(viewerUserId) ?? []) : null;
-  const viewerDetails = viewerStats ? selfDetails(viewerStats) : null;
-  const viewerAge = viewerStats ? clubAge(viewerStats) : null;
+  const viewerUser = viewerUserId ? users.find((u) => u.id === viewerUserId) ?? null : null;
+  const viewerDetails = viewerStats ? selfDetails(viewerStats, viewerUser?.birthDate ?? null) : null;
 
   const boards: Board[] = [];
 
@@ -256,11 +275,7 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
         displayName: u.displayName,
         avatarEmoji: u.avatarEmoji,
         rank: r.rank,
-        // Your own Body Age shows as the row value — only ever to you.
-        display:
-          meta.key === "age" && userId === viewerUserId && viewerAge != null
-            ? `${viewerAge} yrs`
-            : r.display,
+        display: r.display,
         selfDetail: userId === viewerUserId ? viewerDetails?.[meta.key] ?? null : null,
         score: r.score,
         delta: prevRank == null ? null : prevRank - r.rank,
