@@ -1,7 +1,7 @@
 import { and, gte, lt } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { DailyMetricRow, User } from "@/db/schema";
-import { clubAge, healthScores, rankPercentile, windowStats } from "./scores";
+import { clubAge, healthScores, rankPercentile, strainScale, windowStats } from "./scores";
 import { demoData } from "./demo";
 
 export interface BoardEntry {
@@ -83,7 +83,7 @@ function buildBoardScores(users: User[], rowsByUser: Map<string, DailyMetricRow[
   const recovery: RawBoard = [];
   for (const u of users) {
     const s = stats.get(u.id)!;
-    if (s.totalAzm != null) strain.push({ userId: u.id, score: s.totalAzm, display: `${fmt.format(s.totalAzm)} min` });
+    if (s.totalAzm != null) strain.push({ userId: u.id, score: s.totalAzm, display: strainScale(s.totalAzm).toFixed(1) });
     if (s.avgSleepScore != null) sleep.push({ userId: u.id, score: s.avgSleepScore, display: `${Math.round(s.avgSleepScore)}` });
     if (s.avgHrv != null) recovery.push({ userId: u.id, score: s.avgHrv, display: "" });
   }
@@ -195,10 +195,10 @@ export function compositeScores(
 }
 
 const BOARD_META = [
-  { key: "strain", title: "Strain", emoji: "🔥", subtitle: "Active Zone Minutes · 7 days" },
-  { key: "sleep", title: "Sleep", emoji: "😴", subtitle: "Sleep score · 7 days" },
-  { key: "recovery", title: "Recovery", emoji: "🧘", subtitle: "HRV index · 100 = group average" },
-  { key: "health", title: "Health", emoji: "❤️", subtitle: "Resting HR + VO₂ max · 100 = group average" },
+  { key: "strain", title: "Strain", emoji: "🔥", subtitle: "Who pushed their body hardest · 0–21 this week" },
+  { key: "sleep", title: "Sleep", emoji: "😴", subtitle: "Who recharged best, night after night" },
+  { key: "recovery", title: "Recovery", emoji: "🧘", subtitle: "Whose body is most ready to go · 100 = average" },
+  { key: "health", title: "Health", emoji: "❤️", subtitle: "Strongest heart engine · 100 = average" },
   { key: "age", title: "Club Age", emoji: "🎂", subtitle: "Youngest body first" },
 ] as const;
 
@@ -309,7 +309,7 @@ function buildFormGuide(
     // [metric, current, previous, sign] — sign -1 where lower is better.
     const defs: [string, number | null, number | null, 1 | -1][] = [
       ["Steps", c.avgSteps, p.avgSteps, 1],
-      ["Workouts", c.totalAzm, p.totalAzm, 1],
+      ["Strain", c.totalAzm, p.totalAzm, 1],
       ["Sleep", c.avgSleepScore, p.avgSleepScore, 1],
       ["Resting HR", c.avgRestingHr, p.avgRestingHr, -1],
       ["Recovery", c.avgHrv, p.avgHrv, 1],

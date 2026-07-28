@@ -1,8 +1,8 @@
 import { createAvatar } from "@dicebear/core";
-import { notionists } from "@dicebear/collection";
+import { notionistsNeutral } from "@dicebear/collection";
 
 /**
- * Deterministic line-art portrait (DiceBear "Lorelei", generated locally —
+ * Deterministic face portrait (DiceBear "Notionists Neutral", generated locally —
  * no external requests, in keeping with the privacy promise). The seed mixes
  * the display name with the stored "charm" (the old avatar_emoji column), so
  * editing the charm on /me re-rolls the portrait.
@@ -18,7 +18,7 @@ export default function Avatar({
   size?: number;
   ring?: boolean;
 }) {
-  const svg = createAvatar(notionists, {
+  const svg = createAvatar(notionistsNeutral, {
     seed: `${name}·${charm}`,
     backgroundColor: ["f3f3f0"],
   }).toString();

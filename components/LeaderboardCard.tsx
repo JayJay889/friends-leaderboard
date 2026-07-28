@@ -102,14 +102,13 @@ export default function LeaderboardCard({
   // Every board leads with a ring. Strain fills toward a weekly target,
   // score boards fill with the leader's score (mean-relative, so never pinned),
   // and Club Age fills with youthfulness while keeping the number private.
-  const STRAIN_WEEKLY_TARGET = 500; // Active Zone Minutes
   const AGE_MIN = 18;
   const AGE_MAX = 80;
   const showRing = leader != null;
   const ringValue = !leader
     ? 0
     : board.key === "strain"
-      ? Math.min(100, (leader.score / STRAIN_WEEKLY_TARGET) * 100)
+      ? Math.min(100, ((parseFloat(leader.display) || 0) / 21) * 100)
       : board.key === "age"
         ? Math.max(0, Math.min(100, ((AGE_MAX + leader.score) / (AGE_MAX - AGE_MIN)) * 100))
         : board.key === "recovery" || board.key === "health"

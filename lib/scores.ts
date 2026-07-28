@@ -1,31 +1,28 @@
 import type { DailyMetricRow } from "@/db/schema";
 
 /**
- * Custom sleep score (we deliberately do not depend on Fitbit's proprietary score):
+ * Custom sleep score, WHOOP-style scored against a personal sleep NEED:
  *   score = 0.5 * duration_score + 0.3 * stage_score + 0.2 * efficiency
  *
- * duration_score: 100 at 8h; gentle linear dip to 85 at 6h and 10h,
- * then steep falloff to 0 at 4h / 12h ("linear falloff below 6h and above 10h").
+ * duration_score: 100 at `need`; linear dip to 85 at need ± 2h, then steep
+ * falloff to 0 at need ± 4h. `need` defaults to 8h when no baseline exists.
  * stage_score: (deep + REM) / total asleep, normalized so 40% combined = 100.
  */
-export function sleepScore(row: {
-  sleepMinutes: number | null;
-  sleepEfficiency: number | null;
-  deepMinutes: number | null;
-  remMinutes: number | null;
-}): number | null {
+export function sleepScore(
+  row: {
+    sleepMinutes: number | null;
+    sleepEfficiency: number | null;
+    deepMinutes: number | null;
+    remMinutes: number | null;
+  },
+  needMinutes = 480,
+): number | null {
   const minutes = row.sleepMinutes;
   if (minutes == null || minutes <= 0) return null;
 
-  const h = minutes / 60;
-  let durationScore: number;
-  if (h >= 6 && h <= 10) {
-    durationScore = 100 - (Math.abs(h - 8) / 2) * 15; // 100 at 8h → 85 at 6h/10h
-  } else if (h < 6) {
-    durationScore = Math.max(0, 85 * ((h - 4) / 2)); // 85 at 6h → 0 at 4h
-  } else {
-    durationScore = Math.max(0, 85 * ((12 - h) / 2)); // 85 at 10h → 0 at 12h
-  }
+  const diffH = Math.abs(minutes - needMinutes) / 60;
+  const durationScore =
+    diffH <= 2 ? 100 - (diffH / 2) * 15 : Math.max(0, 85 * (1 - (diffH - 2) / 2));
 
   const stageRatio = ((row.deepMinutes ?? 0) + (row.remMinutes ?? 0)) / minutes;
   const stageScore = Math.min(100, (stageRatio / 0.4) * 100);
@@ -37,6 +34,8 @@ export function sleepScore(row: {
 
 export interface UserWindowStats {
   daysWithData: number;
+  /** Personal sleep need (min): baseline duration clamped to 7–9.5 h. */
+  sleepNeed: number;
   avgSteps: number | null;
   totalAzm: number | null;
   avgSleepScore: number | null;
@@ -62,12 +61,18 @@ export function windowStats(rows: DailyMetricRow[]): UserWindowStats {
 
   const stepsVals = nums((r) => r.steps);
   const azmVals = nums((r) => r.activeZoneMinutes);
+  const sleepVals = nums((r) => r.sleepMinutes);
+  const sleepNeed =
+    sleepVals.length >= 3
+      ? Math.max(420, Math.min(570, sleepVals.reduce((a, b) => a + b, 0) / sleepVals.length))
+      : 480;
   const sleepScores = rows
-    .map((r) => sleepScore(r))
+    .map((r) => sleepScore(r, sleepNeed))
     .filter((v): v is number => v != null);
 
   return {
     daysWithData: rows.length,
+    sleepNeed,
     avgSteps: avg(stepsVals),
     totalAzm: azmVals.length ? azmVals.reduce((a, b) => a + b, 0) : null,
     avgSleepScore: avg(sleepScores),
@@ -128,6 +133,15 @@ export function clubAge(s: UserWindowStats): number | null {
   if (s.avgSleepScore != null) age += nudge((80 - s.avgSleepScore) * 0.08);
   if (s.totalAzm != null) age += nudge((150 - s.totalAzm) * 0.005, 2);
   return Math.round(Math.max(18, Math.min(80, age)));
+}
+
+/**
+ * WHOOP-style logarithmic strain scale, 0–21: early minutes count most and
+ * each further point is harder to earn. `k` sets the curve's appetite —
+ * 300 for weekly Active Zone Minutes, 60 for a single day.
+ */
+export function strainScale(azm: number, k = 300): number {
+  return Math.round(21 * (1 - Math.exp(-Math.max(0, azm) / k)) * 10) / 10;
 }
 
 /** Percentile of a rank within a board: 1st of n → 1.0, last → 0.0, solo → 1.0. */

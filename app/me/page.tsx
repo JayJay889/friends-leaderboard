@@ -7,7 +7,7 @@ import Sparkline from "@/components/Sparkline";
 import { db, schema } from "@/db";
 import { formatHours, getLeaderboardData } from "@/lib/leaderboards";
 import { SCOPE } from "@/lib/google";
-import { clubAge, sleepScore, windowStats } from "@/lib/scores";
+import { clubAge, sleepScore, strainScale, windowStats } from "@/lib/scores";
 import { currentUserId } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -90,10 +90,20 @@ export default async function MePage({
     hrvRow?.hrvDailyRmssd != null && hrvBaseline
       ? Math.round(Math.max(1, Math.min(99, 50 + (hrvRow.hrvDailyRmssd / hrvBaseline - 1) * 250)))
       : null;
-  const lastSleepScore = sleepRow ? sleepScore(sleepRow) : null;
+  const needBase = month.sleepNeed;
+  const lastSleepScore = sleepRow ? sleepScore(sleepRow, needBase) : null;
   const azmVals = rows.map((r) => r.activeZoneMinutes).filter((v): v is number => v != null);
   const azmDailyAvg = azmVals.length ? azmVals.reduce((a, b) => a + b, 0) / azmVals.length : null;
-  const DAILY_STRAIN_TARGET = 30; // Active Zone Minutes per day
+  const dailyStrainScore =
+    strainRow?.activeZoneMinutes != null ? strainScale(strainRow.activeZoneMinutes, 60) : null;
+  // Tonight's need: baseline + sleep-debt bump + strain bump (WHOOP-style).
+  const recentNights = rows.filter((r) => r.sleepMinutes != null).slice(0, 3);
+  const debt = recentNights.reduce((a, r) => a + Math.max(0, needBase - r.sleepMinutes!), 0);
+  const sleepNeedTonight = Math.round(
+    needBase +
+      Math.min(45, debt * 0.2) +
+      (strainRow?.activeZoneMinutes != null && azmDailyAvg && strainRow.activeZoneMinutes > 2 * azmDailyAvg ? 15 : 0),
+  );
   const day = (iso?: string | null) =>
     iso
       ? new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(
@@ -116,7 +126,7 @@ export default async function MePage({
   const trends: { label: string; color: string; pick: (r: any) => number | null; fmt?: (v: number) => string }[] = [
     { label: "Steps", color: "text-metric-strain", pick: (r) => r.steps, fmt: (v) => new Intl.NumberFormat("en-US").format(Math.round(v)) },
     { label: "Active Zone Minutes", color: "text-metric-strain", pick: (r) => r.activeZoneMinutes },
-    { label: "Sleep score", color: "text-metric-sleep", pick: (r) => sleepScore(r) },
+    { label: "Sleep score", color: "text-metric-sleep", pick: (r) => sleepScore(r, month.sleepNeed) },
     { label: "Resting HR", color: "text-metric-health", pick: (r) => r.restingHeartRate, fmt: (v) => `${Math.round(v)} bpm` },
     { label: "HRV (RMSSD)", color: "text-metric-recovery", pick: (r) => r.hrvDailyRmssd, fmt: (v) => `${Math.round(v)} ms` },
   ];
@@ -157,31 +167,13 @@ export default async function MePage({
                 <span className="text-[10px] text-faint">sleep</span>
               </Ring>
               <div className="min-w-0">
-                <p className="hl !text-[10px] text-metric-sleep">Last night</p>
-                <p className="font-num text-sm font-semibold text-sub">
-                  {sleepRow?.sleepMinutes != null ? formatHours(sleepRow.sleepMinutes) : "no data yet"}
+                <p className="hl !text-[10px] text-metric-sleep">Sleep</p>
+                <p className="text-sm font-medium text-sub">How well you recharged last night</p>
+                <p className="mt-0.5 font-num text-xs text-faint">
+                  {sleepRow?.sleepMinutes != null ? formatHours(sleepRow.sleepMinutes) : "no data"} · aim for{" "}
+                  {formatHours(sleepNeedTonight)} tonight
                 </p>
-                <p className="mb-1 text-xs text-faint">{day(sleepRow?.date)}</p>
                 <DeltaChip pct={pctDelta(lastSleepScore, month.avgSleepScore)} />
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Ring
-                value={strainRow?.activeZoneMinutes != null ? Math.min(100, (strainRow.activeZoneMinutes / DAILY_STRAIN_TARGET) * 100) : 0}
-                color="#0093E7"
-                size={116}
-                stroke={8}
-              >
-                <span className="font-num text-3xl font-bold tabular-nums text-ink">
-                  {strainRow?.activeZoneMinutes ?? "–"}
-                </span>
-                <span className="text-[10px] text-faint">min</span>
-              </Ring>
-              <div className="min-w-0">
-                <p className="hl !text-[10px] text-metric-strain">Strain</p>
-                <p className="font-num text-sm font-semibold text-sub">of {DAILY_STRAIN_TARGET} min goal</p>
-                <p className="mb-1 text-xs text-faint">{day(strainRow?.date)}</p>
-                <DeltaChip pct={pctDelta(strainRow?.activeZoneMinutes, azmDailyAvg)} />
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -192,13 +184,42 @@ export default async function MePage({
                 <span className="text-[10px] text-faint">recovery</span>
               </Ring>
               <div className="min-w-0">
-                <p className="hl !text-[10px] text-metric-recovery">Vs your baseline</p>
-                <p className="font-num text-sm font-semibold text-sub">
-                  {hrvRow?.hrvDailyRmssd != null ? `HRV ${Math.round(hrvRow.hrvDailyRmssd)} ms` : "needs a few days"}
+                <p className="hl !text-[10px] text-metric-recovery">Recovery</p>
+                <p className="text-sm font-medium text-sub">
+                  {recoveryPct == null
+                    ? "How ready your body is — needs a few days"
+                    : recoveryPct >= 67
+                      ? "Your body is fully charged — go hard"
+                      : recoveryPct >= 34
+                        ? "Ready for a normal day, not a max effort"
+                        : "Your body wants an easy day"}
                 </p>
-                <p className="text-xs text-faint">
-                  {hrvBaseline ? `30-day baseline ${Math.round(hrvBaseline)} ms` : "building baseline…"}
+                <p className="mt-0.5 font-num text-xs text-faint">
+                  {hrvRow?.hrvDailyRmssd != null && hrvBaseline
+                    ? `HRV ${Math.round(hrvRow.hrvDailyRmssd)} ms vs your usual ${Math.round(hrvBaseline)}`
+                    : "building your baseline"}
                 </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Ring
+                value={dailyStrainScore != null ? (dailyStrainScore / 21) * 100 : 0}
+                color="#0093E7"
+                size={116}
+                stroke={8}
+              >
+                <span className="font-num text-3xl font-bold tabular-nums text-ink">
+                  {dailyStrainScore != null ? dailyStrainScore.toFixed(1) : "–"}
+                </span>
+                <span className="text-[10px] text-faint">of 21</span>
+              </Ring>
+              <div className="min-w-0">
+                <p className="hl !text-[10px] text-metric-strain">Strain</p>
+                <p className="text-sm font-medium text-sub">How hard your body worked today</p>
+                <p className="mt-0.5 font-num text-xs text-faint">
+                  {strainRow?.activeZoneMinutes ?? 0} min with your heart rate up · {day(strainRow?.date)}
+                </p>
+                <DeltaChip pct={pctDelta(strainRow?.activeZoneMinutes, azmDailyAvg)} />
               </div>
             </div>
           </div>
