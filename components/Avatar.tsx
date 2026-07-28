@@ -1,11 +1,11 @@
 import { createAvatar } from "@dicebear/core";
-import { notionistsNeutral } from "@dicebear/collection";
+import { openPeeps } from "@dicebear/collection";
 
 /**
- * Deterministic face portrait (DiceBear "Notionists Neutral", generated locally —
- * no external requests, in keeping with the privacy promise). The seed mixes
- * the display name with the stored "charm" (the old avatar_emoji column), so
- * editing the charm on /me re-rolls the portrait.
+ * Deterministic hand-drawn portrait (DiceBear "Open Peeps", generated locally —
+ * no external requests). Expressive faces on a seeded pastel disc; the seed
+ * mixes the display name with the stored "charm", so editing the charm on /me
+ * re-rolls the portrait.
  */
 export default function Avatar({
   name,
@@ -18,9 +18,11 @@ export default function Avatar({
   size?: number;
   ring?: boolean;
 }) {
-  const svg = createAvatar(notionistsNeutral, {
+  const svg = createAvatar(openPeeps, {
     seed: `${name}·${charm}`,
-    backgroundColor: ["f3f3f0"],
+    backgroundColor: ["ffd5dc", "cdeaf7", "d1f4d9", "ffe6b3", "e6dbff", "ffd9c0", "d9f1ee"],
+    scale: 85,
+    translateY: 4,
   }).toString();
 
   return (
