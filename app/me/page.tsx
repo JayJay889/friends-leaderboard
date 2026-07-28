@@ -137,7 +137,7 @@ export default async function MePage({
     ["Sleep / night", week.avgSleepMinutes != null ? formatHours(week.avgSleepMinutes) : null, pctDelta(week.avgSleepMinutes, month.avgSleepMinutes)],
     ["Resting HR", week.avgRestingHr != null ? `${Math.round(week.avgRestingHr)} bpm` : null, null],
     ["VO₂ max", week.avgVo2max != null ? week.avgVo2max.toFixed(1) : null, pctDelta(week.avgVo2max, month.avgVo2max)],
-    ["Club Age", clubAge(week) != null ? `${clubAge(week)} yrs` : null, null],
+    ["Body Age", clubAge(week) != null ? `${clubAge(week)} yrs` : null, null],
   ];
 
   return (

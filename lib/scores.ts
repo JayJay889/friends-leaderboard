@@ -118,7 +118,7 @@ export function healthScores(
 }
 
 /**
- * "Club Age" — a playful body-age estimate (WHOOP-style, heavily simplified).
+ * "Body Age" — a playful body-age estimate (WHOOP-style, heavily simplified).
  * Anchored on VO₂ max via a rough unisex population decline (~0.4 ml/kg/min
  * per year from ~45 at age 20), then nudged by resting HR, HRV, sleep score
  * and weekly activity volume. A wellness toy, not a medical measurement —

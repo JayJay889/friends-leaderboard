@@ -101,7 +101,7 @@ export default function LeaderboardCard({
   const leader = all[0];
   // Every board leads with a ring. Strain fills toward a weekly target,
   // score boards fill with the leader's score (mean-relative, so never pinned),
-  // and Club Age fills with youthfulness while keeping the number private.
+  // and Body Age fills with youthfulness while keeping the number private.
   const AGE_MIN = 18;
   const AGE_MAX = 80;
   const showRing = leader != null;

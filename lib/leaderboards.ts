@@ -107,7 +107,7 @@ function buildBoardScores(users: User[], rowsByUser: Map<string, DailyMetricRow[
     health.push({ userId, score, display: `${score}` });
   }
 
-  // Club Age: ranked youngest-first; the number itself stays private
+  // Body Age: ranked youngest-first; the number itself stays private
   // (rank-only display — owners see theirs via selfDetail).
   const age: RawBoard = [];
   for (const u of users) {
@@ -199,7 +199,7 @@ const BOARD_META = [
   { key: "sleep", title: "Sleep", emoji: "😴", subtitle: "Who recharged best, night after night" },
   { key: "recovery", title: "Battery", emoji: "🔋", subtitle: "Who\u2019s most recharged right now \u00b7 100 = average" },
   { key: "health", title: "Fitness", emoji: "❤️", subtitle: "Who\u2019s the fittest \u2014 strong heart, big engine \u00b7 100 = average" },
-  { key: "age", title: "Club Age", emoji: "🎂", subtitle: "Youngest body first" },
+  { key: "age", title: "Body Age", emoji: "🎂", subtitle: "Youngest body first — an estimate, not your real age" },
 ] as const;
 
 export async function getLeaderboardData(viewerUserId?: string | null): Promise<LeaderboardData | null> {
@@ -256,7 +256,7 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
         displayName: u.displayName,
         avatarEmoji: u.avatarEmoji,
         rank: r.rank,
-        // Your own Club Age shows as the row value — only ever to you.
+        // Your own Body Age shows as the row value — only ever to you.
         display:
           meta.key === "age" && userId === viewerUserId && viewerAge != null
             ? `${viewerAge} yrs`

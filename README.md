@@ -6,7 +6,7 @@ connects their Fitbit (via Google), the app syncs daily data from the
 
 - **Five boards**, mirroring the classic wearable pillars — Strain (Active
   Zone Minutes), Sleep (our own score), Recovery (HRV, WHOOP-style
-  green/yellow/red bands), Health (resting HR + VO₂ max), and Club Age —
+  green/yellow/red bands), Health (resting HR + VO₂ max), and Body Age —
   plus a **Healthiest Human** composite with an Olympic podium (steps are
   still synced and shown on the personal dashboard, just not a board)
 - **Seasons** — every completed Mon–Sun week crowns a champion; most crowns
@@ -111,14 +111,15 @@ pinger (e.g. cron-job.org) at `/api/sync` with the bearer header.
 
 Rolling 7-day window; deltas compare against the 7 days before that.
 
-- **Strain** = total Active Zone Minutes
-- **Sleep score** = `0.5·duration + 0.3·stages + 0.2·efficiency` (duration:
-  100 at 8 h, gentle dip to 85 at 6 h/10 h, steep falloff outside; stages:
-  (deep+REM)/asleep, 40% = 100)
-- **Recovery** = 7-day avg HRV, shown as a group-normalized % with
-  green/yellow/red valuation bands (67/34 thresholds)
-- **Health** = 60% resting HR (lower better, group-normalized) + 40% VO₂ max
-- **Club Age** = a playful body-age estimate anchored on VO₂ max and nudged by
+- **Strain** = Active Zone Minutes on a logarithmic 0–21 scale (WHOOP-style)
+- **Sleep score** = `0.5·duration + 0.3·stages + 0.2·efficiency`, with
+  duration scored against a personal sleep need (your 30-day baseline,
+  clamped 7–9.5 h); stages: (deep+REM)/asleep, 40% = 100
+- **Battery** (recovery) = 7-day avg HRV as an index where 100 = group
+  average, with green/yellow/red bands (110/90 thresholds)
+- **Fitness** (health) = 60% resting HR (lower better) + 40% VO₂ max,
+  indexed to 100 = group average
+- **Body Age** = a playful body-age estimate anchored on VO₂ max and nudged by
   resting HR, HRV, sleep score and activity volume — ranks are public, the
   number itself is visible only to its owner
 - **Healthiest Human** = mean percentile across boards with data (min 3)
