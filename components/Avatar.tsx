@@ -9,6 +9,12 @@ const FEMALE_HEADS = [
   "mediumBangs", "mediumBangs2", "mediumBangs3", "mediumStraight", "bangs", "bangs2",
   "bun", "bun2", "buns", "bantuKnots", "cornrows", "cornrows2", "twists", "twists2", "afro",
 ];
+// Expressive subset — no blank/serious/monster faces, memes only.
+const MEME_FACES = [
+  "smileLOL", "smileBig", "smileTeethGap", "cheeky", "awe", "suspicious", "tired",
+  "eatingHappy", "hectic", "lovingGrin1", "lovingGrin2", "contempt", "eyesClosed",
+  "driven", "cute", "explaining", "rage",
+];
 const MALE_HEADS = [
   "short1", "short2", "short3", "short4", "short5", "shaved1", "shaved2", "shaved3",
   "flatTop", "flatTopLong", "pomp", "afro", "dreads1", "dreads2", "cornrows", "twists",
@@ -38,6 +44,10 @@ export default function Avatar({
     backgroundColor: ["ffd5dc", "cdeaf7", "d1f4d9", "ffe6b3", "e6dbff", "ffd9c0", "d9f1ee"],
     scale: 85,
     translateY: 4,
+    // Meme-grade uni students: expressive faces only, glasses everywhere.
+    face: MEME_FACES as never,
+    accessoriesProbability: 45,
+    maskProbability: 0,
     ...(gender === "f" ? { head: FEMALE_HEADS as never, facialHairProbability: 0 } : {}),
     ...(gender === "m" ? { head: MALE_HEADS as never, facialHairProbability: 35 } : {}),
   }).toString();

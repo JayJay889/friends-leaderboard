@@ -197,8 +197,8 @@ export function compositeScores(
 const BOARD_META = [
   { key: "strain", title: "Strain", emoji: "🔥", subtitle: "Who pushed their body hardest · 0–21 this week" },
   { key: "sleep", title: "Sleep", emoji: "😴", subtitle: "Who recharged best, night after night" },
-  { key: "recovery", title: "Recovery", emoji: "🧘", subtitle: "Whose body is most ready to go · 100 = average" },
-  { key: "health", title: "Health", emoji: "❤️", subtitle: "Strongest heart engine · 100 = average" },
+  { key: "recovery", title: "Battery", emoji: "🔋", subtitle: "Who\u2019s most recharged right now \u00b7 100 = average" },
+  { key: "health", title: "Fitness", emoji: "❤️", subtitle: "Who\u2019s the fittest \u2014 strong heart, big engine \u00b7 100 = average" },
   { key: "age", title: "Club Age", emoji: "🎂", subtitle: "Youngest body first" },
 ] as const;
 
@@ -312,7 +312,7 @@ function buildFormGuide(
       ["Strain", c.totalAzm, p.totalAzm, 1],
       ["Sleep", c.avgSleepScore, p.avgSleepScore, 1],
       ["Resting HR", c.avgRestingHr, p.avgRestingHr, -1],
-      ["Recovery", c.avgHrv, p.avgHrv, 1],
+      ["Battery", c.avgHrv, p.avgHrv, 1],
     ];
     const changes: { metric: string; pct: number }[] = [];
     for (const [metric, curr, prev, sign] of defs) {

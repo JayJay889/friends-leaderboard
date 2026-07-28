@@ -128,7 +128,7 @@ export default async function MePage({
     { label: "Active Zone Minutes", color: "text-metric-strain", pick: (r) => r.activeZoneMinutes },
     { label: "Sleep score", color: "text-metric-sleep", pick: (r) => sleepScore(r, month.sleepNeed) },
     { label: "Resting HR", color: "text-metric-health", pick: (r) => r.restingHeartRate, fmt: (v) => `${Math.round(v)} bpm` },
-    { label: "HRV (RMSSD)", color: "text-metric-recovery", pick: (r) => r.hrvDailyRmssd, fmt: (v) => `${Math.round(v)} ms` },
+    { label: "Battery (HRV)", color: "text-metric-recovery", pick: (r) => r.hrvDailyRmssd, fmt: (v) => `${Math.round(v)} ms` },
   ];
 
   const numbers: [string, string | null, number | null][] = [
@@ -184,7 +184,7 @@ export default async function MePage({
                 <span className="text-[10px] text-faint">recovery</span>
               </Ring>
               <div className="min-w-0">
-                <p className="hl !text-[10px] text-metric-recovery">Recovery</p>
+                <p className="hl !text-[10px] text-metric-recovery">Battery</p>
                 <p className="text-sm font-medium text-sub">
                   {recoveryPct == null
                     ? "How ready your body is — needs a few days"
