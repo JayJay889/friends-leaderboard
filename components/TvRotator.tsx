@@ -78,7 +78,8 @@ export default function TvRotator({
           style={{ animationDuration: `${intervalSec}s` }}
         />
       </div>
-      <nav className="relative flex items-center justify-center gap-6 pb-5">
+      {/* Padded clear of the corner badge so the tabs never run underneath it. */}
+      <nav className="relative flex flex-wrap items-center justify-center gap-x-6 gap-y-1 px-36 pb-5">
         {titles.map((title, i) => (
           <button
             key={title}
