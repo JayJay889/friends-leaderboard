@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/db";
 import { encrypt } from "@/lib/crypto";
-import { exchangeCode, googleUserIdFromIdToken } from "@/lib/google";
+import { exchangeCode, identityFromIdToken } from "@/lib/google";
 import { sessionCookieValue } from "@/lib/session";
 import { syncUser } from "@/lib/sync";
 
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
 
   if (!tokens.refresh_token) return fail("no_refresh_token");
   if (!tokens.id_token) return fail("no_id_token");
-  const googleUserId = googleUserIdFromIdToken(tokens.id_token);
+  const { googleUserId, givenName } = identityFromIdToken(tokens.id_token);
   const grantedScopes = tokens.scope.split(" ").filter((s) => s.startsWith("https://"));
 
   const existing = await db()
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     isNew = true;
     await db().insert(schema.users).values({
       id: userId,
-      displayName: "New Friend",
+      displayName: givenName?.slice(0, 40) ?? "New Friend",
       avatarEmoji: "🐣",
       googleUserId,
     });

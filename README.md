@@ -65,14 +65,16 @@ No database yet? Set `DEMO_MODE=1` to preview the UI with fake friends.
 
 ### Scopes
 
-The auth URL requests exactly these Health scopes plus `openid`:
+The auth URL requests exactly these Health scopes plus `openid` and `profile`:
 
 - `https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly`
 - `https://www.googleapis.com/auth/googlehealth.health_metrics_and_measurements.readonly`
 - `https://www.googleapis.com/auth/googlehealth.sleep.readonly`
 - `openid` — without an identity scope Google returns no user identifier at
-  all; `openid` is non-sensitive and yields only the stable user id (no
-  email/profile is requested)
+  all; `openid` is non-sensitive and yields only the stable user id
+- `profile` — puts the user's name in the id_token so new members join with
+  their real name prefilled (editable on /me); non-sensitive, no email
+  requested
 
 Partial grants are handled: anyone can untick a scope on the consent screen
 and simply won't appear on boards that need that data. Note: users' Fitbit
@@ -112,12 +114,22 @@ pinger (e.g. cron-job.org) at `/api/sync` with the bearer header.
 Rolling 7-day window; deltas compare against the 7 days before that.
 
 - **Strain** = Active Zone Minutes on a logarithmic 0–21 scale (WHOOP-style)
-- **Sleep score** = `0.5·duration + 0.3·stages + 0.2·efficiency`, with
-  duration scored against a personal sleep need (your 30-day baseline,
-  clamped 7–9.5 h); stages: (deep+REM)/asleep, 40% = 100
-- **Battery** (recovery) = 7-day avg HRV as an index where 100 = group
-  average, with green/yellow/red bands (110/90 thresholds)
-- **Fitness** (health) = 60% resting HR (lower better) + 40% VO₂ max,
+- **Sleep score** = `0.5·duration + 0.25·stages + 0.25·restoration`, mirroring
+  Fitbit's published split. Duration is scored against a personal sleep need
+  (60% of the 8 h adult norm + 40% of your own baseline, clamped 7.5–9.5 h) and
+  a shortfall costs 1.5× its size, so 6 h against an 8 h need scores ~73, not
+  ~92. Stages score deep (22%) and REM (25%) separately against the top of the
+  healthy range. Restoration rescales efficiency across 90–100%, the band that
+  actually varies. Components renormalize when a night lacks staging, so
+  missing data no longer reads as "zero deep sleep".
+  Note: this cannot equal the score in the Fitbit app — that one uses sleeping
+  heart rate and restlessness, which the API never exposes (`SleepSummary` has
+  no score field). It targets the same *shape*, not the same number.
+- **Battery** (recovery, on /me) = `0.6·HRV + 0.25·resting HR + 0.15·sleep`,
+  each against your OWN 30-day baseline; bands ≥67 green / ≥34 yellow / red.
+  The Battery *board* ranks 7-day avg HRV as an index where 100 = group average
+  (110/90 band thresholds)
+- **Fitness** (health) = 60% VO₂ max + 40% resting HR (lower better),
   indexed to 100 = group average
 - **Body Age** = a playful body-age estimate anchored on VO₂ max and nudged by
   resting HR, HRV, sleep score and activity volume — ranks are public, the

@@ -36,6 +36,7 @@ export function demoData(): {
     id: `demo-${i}`,
     displayName: f.name,
     avatarEmoji: f.emoji,
+    avatarOptions: null,
     googleUserId: `demo-google-${i}`,
     birthDate: f.birthDate,
     createdAt: new Date("2026-05-01T00:00:00Z"),

@@ -25,6 +25,11 @@ export default {
           soft: "#00C583",
           wash: "#0A2A22",
         },
+        lagoon: {
+          DEFAULT: "#4FD8E8", // crystal-water blue — pre-flight instructions
+          soft: "#2CBFD1",
+          wash: "#0D262B",
+        },
         silverware: "#6E7E88",
         bronzeware: "#8A6B52",
         brick: "#FF0026", // valuation down / red lantern

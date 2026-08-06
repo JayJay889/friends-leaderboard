@@ -1,13 +1,14 @@
 import { desc, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Avatar from "@/components/Avatar";
+import AvatarStudio from "@/components/AvatarStudio";
 import DisconnectButton from "@/components/DisconnectButton";
 import Ring, { bandColor } from "@/components/Ring";
 import Sparkline from "@/components/Sparkline";
 import { db, schema } from "@/db";
 import { formatHours, getLeaderboardData, realAge } from "@/lib/leaderboards";
 import { SCOPE } from "@/lib/google";
-import { clubAge, sleepScore, strainScale, windowStats } from "@/lib/scores";
+import { clubAge, recoveryScore, sleepScore, strainScale, windowStats } from "@/lib/scores";
 import { currentUserId } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -86,12 +87,17 @@ export default async function MePage({
   const hrvRow = rows.find((r) => r.hrvDailyRmssd != null) ?? null;
   const hrvVals = rows.map((r) => r.hrvDailyRmssd).filter((v): v is number => v != null);
   const hrvBaseline = hrvVals.length > 2 ? hrvVals.reduce((a, b) => a + b, 0) / hrvVals.length : null;
-  const recoveryPct =
-    hrvRow?.hrvDailyRmssd != null && hrvBaseline
-      ? Math.round(Math.max(1, Math.min(99, 50 + (hrvRow.hrvDailyRmssd / hrvBaseline - 1) * 250)))
-      : null;
   const needBase = month.sleepNeed;
   const lastSleepScore = sleepRow ? sleepScore(sleepRow, needBase) : null;
+  const rhrRow = rows.find((r) => r.restingHeartRate != null) ?? null;
+  const recoveryPct = recoveryScore(
+    {
+      hrv: hrvRow?.hrvDailyRmssd ?? null,
+      restingHr: rhrRow?.restingHeartRate ?? null,
+      sleepScore: lastSleepScore,
+    },
+    { hrv: hrvBaseline, restingHr: month.avgRestingHr },
+  );
   const azmVals = rows.map((r) => r.activeZoneMinutes).filter((v): v is number => v != null);
   const azmDailyAvg = azmVals.length ? azmVals.reduce((a, b) => a + b, 0) / azmVals.length : null;
   const dailyStrainScore =
@@ -147,21 +153,66 @@ export default async function MePage({
     ],
   ];
 
+  const isWelcome = !!searchParams.welcome;
+
+  const profileCard = (
+    <section className="rounded-2xl border border-hairline bg-card p-5 shadow-card">
+      <h2 className="mb-3 font-display text-lg font-semibold">Profile</h2>
+      <form method="post" action="/api/me/profile" className="flex flex-wrap items-end gap-3">
+        <label className="text-sm text-sub">
+          Display name
+          <input name="displayName" defaultValue={user.displayName} maxLength={40} required className={inputClass} />
+        </label>
+        <label className="text-sm text-sub">
+          Lucky charm
+          <input name="avatarEmoji" defaultValue={user.avatarEmoji} maxLength={8} className={`${inputClass} w-24 text-center`} />
+        </label>
+        <label className="text-sm text-sub">
+          Birthday
+          <input
+            type="date"
+            name="birthDate"
+            defaultValue={user.birthDate ?? ""}
+            className={inputClass}
+          />
+        </label>
+        <button className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-[#101518] hover:bg-brass-soft">
+          Save
+        </button>
+        <p className="basis-full text-xs text-faint">Birthday powers the Age Defied board (only the difference is public).</p>
+      </form>
+
+      <details className="mt-5 border-t border-hairline pt-4" open={isWelcome}>
+        <summary className="cursor-pointer text-sm font-medium text-lagoon">Design your portrait</summary>
+        <div className="mt-4">
+          <AvatarStudio
+            name={user.displayName}
+            charm={user.avatarEmoji}
+            initial={user.avatarOptions ?? null}
+          />
+        </div>
+      </details>
+    </section>
+  );
+
   return (
     <div className="space-y-6">
-      {searchParams.welcome && (
+      {isWelcome && (
         <p className="rounded-xl border border-forest-soft/40 bg-forest-wash px-4 py-3 text-sm text-forest">
-          Welcome to the club. Pick a name and add your birthday below — your data is already on the boards.
+          Welcome to the club, {user.displayName} — your data is already on the boards. Fix your
+          name if Google got it wrong, and add your birthday to enter the Age Defied board.
         </p>
       )}
 
       <section className="flex items-center gap-4">
-        <Avatar name={user.displayName} charm={user.avatarEmoji} size={64} ring />
+        <Avatar name={user.displayName} charm={user.avatarEmoji} options={user.avatarOptions} size={64} ring />
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight">{user.displayName}</h1>
           <p className="label-caps mt-1">Private member dashboard</p>
         </div>
       </section>
+
+      {isWelcome && profileCard}
 
       {/* Your day — WHOOP-style personal overview */}
       {(sleepRow || strainRow || recoveryPct != null) && (
@@ -202,9 +253,16 @@ export default async function MePage({
                         : "Your body wants an easy day"}
                 </p>
                 <p className="mt-0.5 font-num text-xs text-faint">
-                  {hrvRow?.hrvDailyRmssd != null && hrvBaseline
-                    ? `HRV ${Math.round(hrvRow.hrvDailyRmssd)} ms vs your usual ${Math.round(hrvBaseline)}`
-                    : "building your baseline"}
+                  {[
+                    hrvRow?.hrvDailyRmssd != null && hrvBaseline
+                      ? `HRV ${Math.round(hrvRow.hrvDailyRmssd)} vs ${Math.round(hrvBaseline)} ms`
+                      : null,
+                    rhrRow?.restingHeartRate != null && month.avgRestingHr
+                      ? `pulse ${Math.round(rhrRow.restingHeartRate)} vs ${Math.round(month.avgRestingHr)} bpm`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "building your baseline"}
                 </p>
               </div>
             </div>
@@ -233,33 +291,8 @@ export default async function MePage({
         </section>
       )}
 
-      {/* Profile */}
-      <section className="rounded-2xl border border-hairline bg-card p-5 shadow-card">
-        <h2 className="mb-3 font-display text-lg font-semibold">Profile</h2>
-        <form method="post" action="/api/me/profile" className="flex flex-wrap items-end gap-3">
-          <label className="text-sm text-sub">
-            Display name
-            <input name="displayName" defaultValue={user.displayName} maxLength={40} required className={inputClass} />
-          </label>
-          <label className="text-sm text-sub">
-            Lucky charm
-            <input name="avatarEmoji" defaultValue={user.avatarEmoji} maxLength={8} className={`${inputClass} w-24 text-center`} />
-          </label>
-          <label className="text-sm text-sub">
-            Birthday
-            <input
-              type="date"
-              name="birthDate"
-              defaultValue={user.birthDate ?? ""}
-              className={inputClass}
-            />
-          </label>
-          <button className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-[#101518] hover:bg-brass-soft">
-            Save
-          </button>
-          <p className="basis-full text-xs text-faint">Charm re-rolls your portrait · birthday powers the Age Defied board (only the difference is public).</p>
-        </form>
-      </section>
+      {/* Profile (shown up top instead when welcoming a new member) */}
+      {!isWelcome && profileCard}
 
       {/* Ranks */}
       <section className="rounded-2xl border border-hairline bg-card p-5 shadow-card">

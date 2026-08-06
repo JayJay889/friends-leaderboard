@@ -70,7 +70,7 @@ export async function getHallOfFame(): Promise<HallOfFame | null> {
     if (!winner) continue;
     honors.push({
       weekStart: wk,
-      person: { displayName: winner.displayName, avatarEmoji: winner.avatarEmoji },
+      person: { displayName: winner.displayName, avatarEmoji: winner.avatarEmoji, avatarOptions: winner.avatarOptions },
       points: Math.round(winner.score * 100),
     });
   }
@@ -99,7 +99,11 @@ export async function getHallOfFame(): Promise<HallOfFame | null> {
     .sort(([a], [b]) => (a < b ? 1 : -1))
     .map(([, s]) => {
       const [champ] = tallyFor(s.honors);
-      return { name: s.name, champion: { displayName: champ.displayName, avatarEmoji: champ.avatarEmoji }, crowns: champ.crowns };
+      return {
+        name: s.name,
+        champion: { displayName: champ.displayName, avatarEmoji: champ.avatarEmoji, avatarOptions: champ.avatarOptions },
+        crowns: champ.crowns,
+      };
     });
 
   const currentHonors = bySemester.get(currentSemester.key)?.honors ?? [];

@@ -13,10 +13,12 @@ export default function TvRotator({
   slides,
   titles,
   intervalSec,
+  corner,
 }: {
   slides: React.ReactNode[];
   titles: string[];
   intervalSec: number;
+  corner?: React.ReactNode;
 }) {
   const router = useRouter();
   const [index, setIndex] = useState(0);
@@ -65,6 +67,8 @@ export default function TvRotator({
           </div>
         ))}
       </div>
+
+      {corner && <div className="absolute bottom-6 right-8 z-10">{corner}</div>}
 
       {/* Rotation progress toward the next slide */}
       <div className="relative mx-auto mb-2.5 h-0.5 w-44 overflow-hidden rounded-full bg-white/10">

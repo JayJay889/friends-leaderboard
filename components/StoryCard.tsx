@@ -5,7 +5,7 @@ function Name({ p }: { p: StoryPerson }) {
   return (
     <span className="inline-flex items-baseline gap-1.5 font-semibold text-ink">
       <span className="translate-y-1">
-        <Avatar name={p.displayName} charm={p.avatarEmoji} size={20} />
+        <Avatar name={p.displayName} charm={p.avatarEmoji} options={p.avatarOptions} size={20} />
       </span>
       {p.displayName}
     </span>

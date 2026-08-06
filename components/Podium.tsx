@@ -13,7 +13,7 @@ function Spot({ entry, size }: { entry: BoardEntry; size: number }) {
   return (
     <div className="flex w-28 flex-col items-center gap-1.5 sm:w-36">
       <span className={first ? "float-slow" : ""}>
-        <Avatar name={entry.displayName} charm={entry.avatarEmoji} size={size} ring={first} />
+        <Avatar name={entry.displayName} charm={entry.avatarEmoji} options={entry.avatarOptions} size={size} ring={first} />
       </span>
       <p className="max-w-full truncate font-display text-sm font-semibold text-ink">
         {entry.displayName}

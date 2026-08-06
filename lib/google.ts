@@ -8,9 +8,12 @@ const REVOKE_URL = "https://oauth2.googleapis.com/revoke";
 // The three Google Health API scopes registered on the "friends-leaderboard-web"
 // OAuth client, plus `openid` — needed to receive an id_token carrying the stable
 // Google user id (`sub`). Without an identity scope the token response contains
-// no user identifier at all. `openid` is non-sensitive and always allowed.
+// no user identifier at all. `profile` additionally puts the user's name in the
+// id_token so new members join with their real name prefilled. Both are
+// non-sensitive basic scopes and always allowed.
 export const SCOPES = [
   "openid",
+  "profile",
   "https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly",
   "https://www.googleapis.com/auth/googlehealth.health_metrics_and_measurements.readonly",
   "https://www.googleapis.com/auth/googlehealth.sleep.readonly",
@@ -110,12 +113,20 @@ export async function revokeToken(token: string): Promise<void> {
 }
 
 /**
- * Extracts the Google user id (`sub`) from an id_token. The token arrived
- * directly from Google's token endpoint over TLS, so decoding without
- * signature verification is safe here.
+ * Extracts the Google user id (`sub`) and name from an id_token. The token
+ * arrived directly from Google's token endpoint over TLS, so decoding without
+ * signature verification is safe here. Name claims are only present when the
+ * `profile` scope was granted.
  */
-export function googleUserIdFromIdToken(idToken: string): string {
+export function identityFromIdToken(idToken: string): {
+  googleUserId: string;
+  givenName: string | null;
+} {
   const payload = JSON.parse(Buffer.from(idToken.split(".")[1], "base64url").toString("utf8"));
   if (!payload.sub) throw new Error("id_token missing sub claim");
-  return String(payload.sub);
+  const givenName = payload.given_name ?? payload.name ?? null;
+  return {
+    googleUserId: String(payload.sub),
+    givenName: typeof givenName === "string" && givenName.trim() ? givenName.trim() : null,
+  };
 }

@@ -59,7 +59,7 @@ export function EntryRow({
         <span className={`w-6 shrink-0 text-center font-num text-sm font-semibold ${leader ? "text-ink" : "text-faint"}`}>
           {entry.rank}
         </span>
-        <Avatar name={entry.displayName} charm={entry.avatarEmoji} size={leader ? 36 : 30} ring={leader} />
+        <Avatar name={entry.displayName} charm={entry.avatarEmoji} options={entry.avatarOptions} size={leader ? 36 : 30} ring={leader} />
         <span
           className={`min-w-[3.5rem] flex-1 truncate ${leader ? "font-display text-[15px] font-semibold text-ink" : "text-sm font-medium text-sub"}`}
         >
@@ -145,7 +145,7 @@ export default function LeaderboardCard({
               <div className="min-w-0">
                 <p className="label-caps">Leader</p>
                 <p className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
-                  <Avatar name={leader.displayName} charm={leader.avatarEmoji} size={26} ring />
+                  <Avatar name={leader.displayName} charm={leader.avatarEmoji} options={leader.avatarOptions} size={26} ring />
                   <span className="truncate">{leader.displayName}</span>
                 </p>
               </div>

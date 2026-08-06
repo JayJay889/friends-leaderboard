@@ -1,6 +1,7 @@
 import { and, gte, lt } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { DailyMetricRow, User } from "@/db/schema";
+import type { AvatarOptions } from "./avatar";
 import { clubAge, healthScores, rankPercentile, strainScale, windowStats } from "./scores";
 import { demoData } from "./demo";
 
@@ -8,6 +9,7 @@ export interface BoardEntry {
   userId: string;
   displayName: string;
   avatarEmoji: string;
+  avatarOptions: AvatarOptions | null;
   rank: number;
   /** Human-readable value ("12,304", "78 pts"). Raw values only shown for steps/AZM. */
   display: string;
@@ -21,6 +23,7 @@ export interface BoardEntry {
 export interface StoryPerson {
   displayName: string;
   avatarEmoji: string;
+  avatarOptions: AvatarOptions | null;
 }
 
 export interface Overtake {
@@ -207,6 +210,7 @@ export function compositeScores(
       userId: uid,
       displayName: u.displayName,
       avatarEmoji: u.avatarEmoji,
+      avatarOptions: u.avatarOptions ?? null,
       score: ps.reduce((a, b) => a + b, 0) / ps.length,
     });
   }
@@ -274,6 +278,7 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
         userId,
         displayName: u.displayName,
         avatarEmoji: u.avatarEmoji,
+        avatarOptions: u.avatarOptions ?? null,
         rank: r.rank,
         display: r.display,
         selfDetail: userId === viewerUserId ? viewerDetails?.[meta.key] ?? null : null,
@@ -291,6 +296,7 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
     userId: c.userId,
     displayName: c.displayName,
     avatarEmoji: c.avatarEmoji,
+    avatarOptions: c.avatarOptions ?? null,
     rank: i + 1,
     display: `${Math.round(c.score * 100)} pts`,
     selfDetail: null,
@@ -337,7 +343,7 @@ function buildFormGuide(
     }
     if (changes.length === 0) continue;
     per.push({
-      person: { displayName: u.displayName, avatarEmoji: u.avatarEmoji },
+      person: { displayName: u.displayName, avatarEmoji: u.avatarEmoji, avatarOptions: u.avatarOptions ?? null },
       overall: Math.round(changes.reduce((a, b) => a + b.pct, 0) / changes.length),
       changes,
     });
@@ -362,6 +368,7 @@ function buildStory(boards: Board[], composite: BoardEntry[]): Omit<WeeklyStory,
   const person = (e: BoardEntry): StoryPerson => ({
     displayName: e.displayName,
     avatarEmoji: e.avatarEmoji,
+    avatarOptions: e.avatarOptions,
   });
 
   // Overtakes: on each board, A now above B but B was above A last week.

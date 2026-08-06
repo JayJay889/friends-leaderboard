@@ -1,5 +1,6 @@
 import Avatar from "@/components/Avatar";
 import LeaderboardCard from "@/components/LeaderboardCard";
+import QrJoinBadge from "@/components/QrJoinBadge";
 import TvRotator from "@/components/TvRotator";
 import { getLeaderboardData, type BoardEntry, type StoryPerson } from "@/lib/leaderboards";
 import { formatWeek, getHallOfFame } from "@/lib/seasons";
@@ -14,7 +15,7 @@ function PodiumRow({ entry, isLast }: { entry: BoardEntry; isLast: boolean }) {
         <span className={`w-10 shrink-0 text-right font-display ${leader ? "text-3xl font-semibold" : "text-xl text-faint"}`}>
           {entry.rank}.
         </span>
-        <Avatar name={entry.displayName} charm={entry.avatarEmoji} size={leader ? 64 : 48} ring={leader} />
+        <Avatar name={entry.displayName} charm={entry.avatarEmoji} options={entry.avatarOptions} size={leader ? 64 : 48} ring={leader} />
         <span className={`shrink truncate font-display ${leader ? "text-4xl font-bold text-ink" : "text-2xl text-sub"}`}>
           {leader && <span className="mr-2 text-brass">♛</span>}
           {entry.displayName}
@@ -37,7 +38,7 @@ function MoverRow({ mover }: { mover: StoryPerson & { spots: number } }) {
   const up = mover.spots > 0;
   return (
     <li className="flex items-center gap-3 py-2">
-      <Avatar name={mover.displayName} charm={mover.avatarEmoji} size={40} />
+      <Avatar name={mover.displayName} charm={mover.avatarEmoji} options={mover.avatarOptions} size={40} />
       <span className="shrink truncate font-display text-xl text-ink">{mover.displayName}</span>
       <span className="dotlead" />
       <span className={`shrink-0 font-display text-3xl font-bold tabular-nums ${up ? "text-forest" : "text-brick"}`}>
@@ -157,7 +158,7 @@ export default async function TvPage({
               <div className="flex items-center gap-4 rounded-2xl bg-ivory px-5 py-4 ring-1 ring-forest/30">
                 <Avatar
                   name={data.story.formGuide.improved.displayName}
-                  charm={data.story.formGuide.improved.avatarEmoji}
+                  charm={data.story.formGuide.improved.avatarEmoji} options={data.story.formGuide.improved.avatarOptions}
                   size={52}
                 />
                 <div className="min-w-0 flex-1">
@@ -175,7 +176,7 @@ export default async function TvPage({
               <div className="flex items-center gap-4 rounded-2xl bg-ivory px-5 py-4 ring-1 ring-brick/30">
                 <Avatar
                   name={data.story.formGuide.declined.displayName}
-                  charm={data.story.formGuide.declined.avatarEmoji}
+                  charm={data.story.formGuide.declined.avatarEmoji} options={data.story.formGuide.declined.avatarOptions}
                   size={52}
                 />
                 <div className="min-w-0 flex-1">
@@ -233,7 +234,7 @@ export default async function TvPage({
         {hall.tally.slice(0, top).map((t, i) => (
           <li key={t.displayName} className={i === 0 ? "py-3" : "py-2"}>
             <div className="flex items-center gap-4">
-              <Avatar name={t.displayName} charm={t.avatarEmoji} size={i === 0 ? 64 : 48} ring={i === 0} />
+              <Avatar name={t.displayName} charm={t.avatarEmoji} options={t.avatarOptions} size={i === 0 ? 64 : 48} ring={i === 0} />
               <span className={`shrink truncate font-display ${i === 0 ? "text-4xl font-bold text-ink" : "text-2xl text-sub"}`}>
                 {t.displayName}
               </span>
@@ -259,5 +260,17 @@ export default async function TvPage({
   const slides = [podium, boards, movers, ...(championship ? [championship] : [])];
   const titles = ["The Podium", "The Boards", "The Movers", ...(championship ? ["The Championship"] : [])];
 
-  return <TvRotator slides={slides} titles={titles} intervalSec={intervalSec} />;
+  // Scanning lands on /connect with the invite code prefilled.
+  const joinUrl = process.env.INVITE_CODE
+    ? `${process.env.APP_URL ?? "http://localhost:3000"}/connect?invite=${encodeURIComponent(process.env.INVITE_CODE)}`
+    : null;
+
+  return (
+    <TvRotator
+      slides={slides}
+      titles={titles}
+      intervalSec={intervalSec}
+      corner={joinUrl && <QrJoinBadge url={joinUrl} />}
+    />
+  );
 }

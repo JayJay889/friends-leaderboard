@@ -1,17 +1,21 @@
 import {
   date,
   integer,
+  jsonb,
   pgTable,
   primaryKey,
   real,
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
+import type { AvatarOptions } from "@/lib/avatar";
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
   displayName: text("display_name").notNull(),
   avatarEmoji: text("avatar_emoji").notNull().default("🐣"),
+  // Explicit portrait picks from the character builder. Null = seeded portrait.
+  avatarOptions: jsonb("avatar_options").$type<AvatarOptions>(),
   googleUserId: text("google_user_id").notNull().unique(),
   // Optional; powers the Age Defied board (only the body-vs-real difference is public).
   birthDate: date("birth_date"),
