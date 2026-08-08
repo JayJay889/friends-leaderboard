@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import SyncNudge from "./SyncNudge";
+
 /**
  * Full-screen slide rotator for kiosk/TV use. Server-rendered slides come in
  * as children; this only handles timing, fade, and input.
@@ -88,6 +90,8 @@ export default function TvRotator({
           </div>
         ))}
       </div>
+
+      <SyncNudge />
 
       {corner && <div className="absolute bottom-6 right-8 z-10">{corner}</div>}
 

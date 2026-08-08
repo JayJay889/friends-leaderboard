@@ -1,6 +1,7 @@
 import Link from "next/link";
 import LeaderboardCard, { EntryRow } from "@/components/LeaderboardCard";
 import Podium from "@/components/Podium";
+import SyncNudge from "@/components/SyncNudge";
 import { getLeaderboardData } from "@/lib/leaderboards";
 import { getHallOfFame } from "@/lib/seasons";
 import { currentUserId } from "@/lib/session";
@@ -29,6 +30,9 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-6">
+      {/* Someone reading the boards is reason enough to check for fresh data. */}
+      <SyncNudge />
+
       {data.demo && (
         <p className="rounded-lg border border-brass-soft/30 bg-brass-wash py-1.5 text-center text-xs font-medium text-brass">
           Demo mode — showing fake friends. Set DEMO_MODE=0 once real data flows.
