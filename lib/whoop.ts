@@ -28,20 +28,23 @@ export const SCOPE = {
   sleep: "read:sleep",
 } as const;
 
-function clientId(): string {
-  const v = process.env.WHOOP_CLIENT_ID;
-  if (!v) throw new Error("WHOOP_CLIENT_ID is not set");
+/**
+ * Credentials are trimmed on the way in. Copying a value out of a dashboard
+ * very easily brings a trailing newline with it, which then rides along into
+ * the authorize URL as %0A and gets the request rejected — with an error that
+ * points at the credential rather than at the whitespace.
+ */
+function env(name: string): string {
+  const v = process.env[name]?.trim();
+  if (!v) throw new Error(`${name} is not set`);
   return v;
 }
 
-function clientSecret(): string {
-  const v = process.env.WHOOP_CLIENT_SECRET;
-  if (!v) throw new Error("WHOOP_CLIENT_SECRET is not set");
-  return v;
-}
+const clientId = () => env("WHOOP_CLIENT_ID");
+const clientSecret = () => env("WHOOP_CLIENT_SECRET");
 
 export function isConfigured(): boolean {
-  return !!process.env.WHOOP_CLIENT_ID && !!process.env.WHOOP_CLIENT_SECRET;
+  return !!process.env.WHOOP_CLIENT_ID?.trim() && !!process.env.WHOOP_CLIENT_SECRET?.trim();
 }
 
 export function redirectUri(): string {
