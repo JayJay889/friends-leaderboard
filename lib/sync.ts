@@ -137,12 +137,22 @@ export async function syncUser(user: User, token: OauthTokenRow): Promise<SyncRe
   return { userId: user.id, source, updatedDates, errors };
 }
 
-/** Syncs every pull-based connection. A member with two devices yields two rows. */
-export async function syncAllUsers(): Promise<SyncResult[]> {
+/**
+ * Syncs every pull-based connection. A member with two devices yields two rows.
+ *
+ * `only` limits the run to one provider. That exists because the two providers
+ * want opposite treatment: Fitbit has to be polled often, since someone who
+ * wakes at 09:00 has no sleep data yet when a 07:30 job looks and would
+ * otherwise sit a full day behind. WHOOP is the reverse — it can push to us the
+ * moment a night is scored, so polling it every twenty minutes would be hundreds
+ * of wasted calls a day and far more than we told them we make.
+ */
+export async function syncAllUsers(only?: Source): Promise<SyncResult[]> {
   const rows = await db()
     .select({ user: schema.users, token: schema.oauthTokens })
     .from(schema.users)
-    .innerJoin(schema.oauthTokens, eq(schema.oauthTokens.userId, schema.users.id));
+    .innerJoin(schema.oauthTokens, eq(schema.oauthTokens.userId, schema.users.id))
+    .where(only ? eq(schema.oauthTokens.provider, only) : undefined);
 
   const results: SyncResult[] = [];
   for (const { user, token } of rows) {
