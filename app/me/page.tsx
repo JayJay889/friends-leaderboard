@@ -10,7 +10,7 @@ import { formatHours, getLeaderboardData, realAge } from "@/lib/leaderboards";
 import { SCOPE } from "@/lib/google";
 import { PROVIDER_LABELS } from "@/lib/providers/types";
 import { prioritiesFor, resolveRows } from "@/lib/resolve";
-import { clubAge, recoveryScore, sleepScore, strainScale, windowStats } from "@/lib/scores";
+import { clubAge, nightNeed, nightlyNeeds, recoveryScore, sleepScore, strainScale, windowStats } from "@/lib/scores";
 import { currentUserId } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -110,7 +110,10 @@ export default async function MePage({
   const hrvVals = rows.map(hrvOf).filter((v): v is number => v != null);
   const hrvBaseline = hrvVals.length > 2 ? hrvVals.reduce((a, b) => a + b, 0) / hrvVals.length : null;
   const needBase = month.sleepNeed;
-  const lastSleepScore = sleepRow ? sleepScore(sleepRow, needBase, effBaseline) : null;
+  const perNightNeeds = nightlyNeeds(rows, needBase);
+  const lastSleepScore = sleepRow
+    ? sleepScore(sleepRow, perNightNeeds.get(sleepRow.date) ?? needBase, effBaseline)
+    : null;
   const rhrRow = rows.find((r) => r.restingHeartRate != null) ?? null;
   const recoveryPct = recoveryScore(
     {
@@ -124,13 +127,15 @@ export default async function MePage({
   const azmDailyAvg = azmVals.length ? azmVals.reduce((a, b) => a + b, 0) / azmVals.length : null;
   const dailyStrainScore =
     strainRow?.activeZoneMinutes != null ? strainScale(strainRow.activeZoneMinutes, 60) : null;
-  // Tonight's need: baseline + sleep-debt bump + strain bump (WHOOP-style).
-  const recentNights = rows.filter((r) => r.sleepMinutes != null).slice(0, 3);
-  const debt = recentNights.reduce((a, r) => a + Math.max(0, needBase - r.sleepMinutes!), 0);
+  // Tonight's need, from the same function that grades the nights already slept,
+  // so the target shown here and the target scored against cannot drift apart.
   const sleepNeedTonight = Math.round(
-    needBase +
-      Math.min(45, debt * 0.2) +
-      (strainRow?.activeZoneMinutes != null && azmDailyAvg && strainRow.activeZoneMinutes > 2 * azmDailyAvg ? 15 : 0),
+    nightNeed(
+      needBase,
+      rows.map((r) => r.sleepMinutes).filter((v): v is number => v != null),
+      strainRow?.activeZoneMinutes ?? null,
+      azmDailyAvg,
+    ),
   );
   const day = (iso?: string | null) =>
     iso
@@ -154,7 +159,7 @@ export default async function MePage({
   const trends: { label: string; color: string; pick: (r: any) => number | null; fmt?: (v: number) => string }[] = [
     { label: "Steps", color: "text-metric-strain", pick: (r) => r.steps, fmt: (v) => new Intl.NumberFormat("en-US").format(Math.round(v)) },
     { label: "Active Zone Minutes", color: "text-metric-strain", pick: (r) => r.activeZoneMinutes },
-    { label: "Sleep score", color: "text-metric-sleep", pick: (r) => sleepScore(r, month.sleepNeed, effBaseline) },
+    { label: "Sleep score", color: "text-metric-sleep", pick: (r) => sleepScore(r, perNightNeeds.get(r.date) ?? month.sleepNeed, effBaseline) },
     { label: "Resting HR", color: "text-metric-health", pick: (r) => r.restingHeartRate, fmt: (v) => `${Math.round(v)} bpm` },
     { label: "Battery (HRV)", color: "text-metric-recovery", pick: (r) => r.hrvDailyRmssd ?? r.hrvSdnn, fmt: (v) => `${Math.round(v)} ms` },
   ];

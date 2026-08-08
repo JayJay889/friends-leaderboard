@@ -130,6 +130,63 @@ export function sleepScore(
   return Math.round(total / weight);
 }
 
+/** Most a run of short nights can add to tonight's target. */
+const DEBT_CAP = 45;
+/** Added after a day far harder than usual. */
+const HARD_DAY_BUMP = 15;
+
+/**
+ * What one particular night needed, rather than what an average night needs.
+ *
+ * A flat target says a person who trained to a 20-out-of-21 strain needs the
+ * same sleep as on a rest day, which is why an identical night scored 91 here
+ * and 85 on WHOOP: they had raised her target and we had not. It also removes an
+ * inconsistency of our own — /me already told members their need had gone up
+ * after a hard day, while the score quietly ignored it.
+ *
+ * `priorNights` are the sleep durations leading into this one, most recent
+ * first; `priorDayLoad` is the activity of the day before it.
+ */
+export function nightNeed(
+  baseNeed: number,
+  priorNights: number[],
+  priorDayLoad: number | null,
+  typicalLoad: number | null,
+): number {
+  const debt = priorNights
+    .slice(0, 3)
+    .reduce((total, minutes) => total + Math.max(0, baseNeed - minutes), 0);
+  const hardDay =
+    priorDayLoad != null && typicalLoad ? priorDayLoad > 2 * typicalLoad : false;
+  return baseNeed + Math.min(DEBT_CAP, debt * 0.2) + (hardDay ? HARD_DAY_BUMP : 0);
+}
+
+/**
+ * Per-night targets across a set of rows, so the same night is graded the same
+ * way wherever it is scored.
+ */
+export function nightlyNeeds(
+  rows: DailyMetricRow[],
+  baseNeed: number,
+): Map<string, number> {
+  const byDate = [...rows].sort((a, b) => a.date.localeCompare(b.date));
+  const loads = byDate.map((r) => r.activeZoneMinutes).filter((v): v is number => v != null);
+  const typicalLoad = loads.length ? loads.reduce((a, b) => a + b, 0) / loads.length : null;
+
+  const out = new Map<string, number>();
+  byDate.forEach((row, i) => {
+    const priorNights = byDate
+      .slice(0, i)
+      .reverse()
+      .map((r) => r.sleepMinutes)
+      .filter((v): v is number => v != null);
+    // The day before the night is the one whose effort has to be slept off.
+    const priorDayLoad = i > 0 ? byDate[i - 1].activeZoneMinutes : null;
+    out.set(row.date, nightNeed(baseNeed, priorNights, priorDayLoad, typicalLoad));
+  });
+  return out;
+}
+
 export interface UserWindowStats {
   daysWithData: number;
   /** Personal sleep need (min): baseline duration clamped to 7–9.5 h. */
@@ -189,8 +246,10 @@ export function windowStats(
           570,
         )
       : ADULT_SLEEP_NEED;
+  // Each night is graded against what THAT night needed, not a window average.
+  const needs = nightlyNeeds(rows, sleepNeed);
   const sleepScores = rows
-    .map((r) => sleepScore(r, sleepNeed, baselineEfficiency))
+    .map((r) => sleepScore(r, needs.get(r.date) ?? sleepNeed, baselineEfficiency))
     .filter((v): v is number => v != null);
 
   // Which HRV metric and which device we are actually holding. Derived from the
