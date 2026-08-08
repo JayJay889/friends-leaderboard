@@ -171,14 +171,66 @@ function fromHealthAutoExport(body: any): AppleDay[] {
   return [...byDate.values()];
 }
 
-/** Normalizes any accepted body into days, or throws if the shape is unusable. */
-export function readPayload(body: any): AppleDay[] {
-  if (Array.isArray(body)) return body;
-  if (Array.isArray(body?.days)) return body.days;
+/**
+ * Shorter names for the same fields.
+ *
+ * Every one of these is an action a person has to add by hand in Shortcuts, so
+ * being forgiving about names is worth more than being tidy about them.
+ */
+const ALIASES: Record<string, keyof AppleDay> = {
+  sleep: "sleepMinutes",
+  asleep: "sleepMinutes",
+  deep: "deepMinutes",
+  rem: "remMinutes",
+  efficiency: "sleepEfficiency",
+  hrv: "hrvSdnn",
+  rhr: "restingHeartRate",
+  restingHR: "restingHeartRate",
+  exercise: "exerciseMinutes",
+  breathing: "breathingRate",
+  respiratoryRate: "breathingRate",
+  vo2Max: "vo2max",
+};
+
+function applyAliases(day: any): AppleDay {
+  const out: any = { ...day };
+  for (const [from, to] of Object.entries(ALIASES)) {
+    if (out[from] != null && out[to] == null) out[to] = out[from];
+  }
+  return out as AppleDay;
+}
+
+/**
+ * Normalizes any accepted body into days.
+ *
+ * Deliberately permissive. The realistic free route on iOS is a hand-built
+ * Shortcut, where every field is another action to add and every date has to be
+ * formatted by hand, so a single day with no date at all is accepted and treated
+ * as today.
+ */
+export function readPayload(body: any, today = new Date()): AppleDay[] {
+  const withDefaults = (days: any[]) =>
+    days.map((d) => {
+      const day = applyAliases(d);
+      return day.date ? day : { ...day, date: isoDate(today) };
+    });
+
+  if (Array.isArray(body)) return withDefaults(body);
+  if (Array.isArray(body?.days)) return withDefaults(body.days);
+
   const hae = fromHealthAutoExport(body);
   if (hae.length > 0) return hae;
+
+  // A bare object is one day, which is all a Shortcut sends.
+  if (body && typeof body === "object" && !Array.isArray(body)) {
+    const day = applyAliases(body);
+    const hasAnyMetric = Object.keys(LIMITS).some((k) => (day as any)[k] != null);
+    if (hasAnyMetric) return withDefaults([day]);
+  }
+
   throw new Error(
-    'Unrecognised body. Send {"days":[{"date":"YYYY-MM-DD", ...}]} or a Health Auto Export payload.',
+    'Unrecognised body. Send {"sleep":420,"hrv":45} for today, {"days":[…]} for several, ' +
+      "or a Health Auto Export payload.",
   );
 }
 

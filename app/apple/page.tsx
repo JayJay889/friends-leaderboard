@@ -89,61 +89,73 @@ export default async function ApplePage({
         </section>
       )}
 
-      <section className="rounded-2xl border border-hairline bg-card p-5 shadow-card">
-        <h2 className="label-caps mb-3">Easiest way — Health Auto Export</h2>
+      <section className="rounded-2xl border border-brass/30 bg-card p-5 shadow-card">
+        <h2 className="label-caps mb-1">Free — the Shortcuts app you already have</h2>
+        <p className="mb-3 text-sm text-sub">
+          Nothing to install and nothing to pay. Somebody has to build it once; after that it can
+          be shared as a link and everyone else just taps it.
+        </p>
         <ol className="list-inside list-decimal space-y-2 text-sm text-sub">
-          <li>Install <strong className="text-ink">Health Auto Export</strong> from the App Store.</li>
           <li>
-            In the app: <strong className="text-ink">Automations → Add Automation →</strong>{" "}
-            choose <strong className="text-ink">REST API</strong>.
-          </li>
-          <li>
-            Set the URL to:
+            Open this once in Safari to get your key:
             <code className="mt-1 block overflow-x-auto rounded-lg bg-ivory px-3 py-2 text-xs text-ink">
               {base}/api/pair/{code ?? "YOUR-CODE"}
             </code>
-            Open that once in Safari — it returns your token and the address to post to.
           </li>
           <li>
-            Back in the app, set the URL to the <strong className="text-ink">endpoint</strong> it
-            gave you and add a header{" "}
-            <code className="rounded bg-ivory px-1 text-xs text-ink">Authorization</code> with value{" "}
-            <code className="rounded bg-ivory px-1 text-xs text-ink">Bearer YOUR-TOKEN</code>.
+            In <strong className="text-ink">Shortcuts</strong>, add one{" "}
+            <strong className="text-ink">Find Health Samples</strong> action per number you want:
+            Sleep Analysis, Heart Rate Variability, Resting Heart Rate, Steps, Apple Exercise Time.
+            Sleep alone is enough to get on two boards.
           </li>
           <li>
-            Select these metrics: steps, exercise time, resting heart rate, heart rate variability,
-            respiratory rate, VO₂ max, sleep analysis. Set it to run daily.
+            Add <strong className="text-ink">Get Contents of URL</strong>, set it to{" "}
+            <strong className="text-ink">POST</strong>, add header{" "}
+            <code className="rounded bg-ivory px-1 text-xs text-ink">Authorization</code> ={" "}
+            <code className="rounded bg-ivory px-1 text-xs text-ink">Bearer YOUR-KEY</code>, and
+            send a JSON body of just the numbers:
+            <code className="mt-1 block overflow-x-auto rounded-lg bg-ivory px-3 py-2 text-xs text-ink">
+              {`{"sleep": 428, "hrv": 46, "rhr": 55, "steps": 9100, "exercise": 44}`}
+            </code>
+            No date needed — leave it out and today is assumed. Send only the fields you have.
+          </li>
+          <li>
+            Under <strong className="text-ink">Automation</strong>, trigger it on{" "}
+            <strong className="text-ink">opening an app you use every morning</strong>, and turn
+            off &quot;Ask Before Running&quot;.
           </li>
         </ol>
-        <p className="mt-3 text-xs text-faint">
-          The app costs a few euros. It runs in the background, which is why it is the reliable
-          option.
+        <p className="mt-3 rounded-lg border-l-2 border-lagoon bg-lagoon/5 px-3.5 py-2.5 text-xs leading-snug text-sub">
+          <strong className="font-semibold text-lagoon">Why an app trigger, not a time?</strong>{" "}
+          iPhone keeps health data locked away while the phone is locked, so a 7am automation
+          quietly fails if you are still asleep. Triggering when you open something guarantees the
+          phone is unlocked. Running several times a day is harmless — repeats simply overwrite.
         </p>
       </section>
 
       <details className="rounded-2xl border border-hairline bg-card p-5 shadow-card">
         <summary className="cursor-pointer text-sm font-medium text-sub">
-          Free alternative — an iPhone Shortcut
+          Paid alternative — Health Auto Export, if you want it fully hands-off
         </summary>
         <div className="mt-3 space-y-2 text-sm text-sub">
           <p>
-            A Shortcut can read Health data and post it for free, but{" "}
-            <strong className="text-ink">
-              it cannot read Health while your phone is locked
-            </strong>
-            , so a scheduled run may quietly do nothing until you next unlock. Fine for a
-            once-a-day leaderboard, worse if you want it reliable.
+            It syncs in the background with no trigger and nothing to build. The REST API export
+            it needs is a <strong className="text-ink">paid</strong> feature, so this only makes
+            sense if the Shortcut route annoys you.
           </p>
-          <p>
-            Build it with: <em>Find Health Samples</em> for each metric →{" "}
-            <em>Get Contents of URL</em> (POST, JSON) to your endpoint with the{" "}
-            <code className="rounded bg-ivory px-1 text-xs text-ink">Authorization</code> header,
-            sending{" "}
-            <code className="rounded bg-ivory px-1 text-xs text-ink">
-              {`{"days":[{"date":"…","steps":…}]}`}
-            </code>
-            .
-          </p>
+          <ol className="list-inside list-decimal space-y-1">
+            <li>Install Health Auto Export, then <strong className="text-ink">Automations → Add Automation → REST API</strong>.</li>
+            <li>Open the pairing link above once in Safari to get your key and endpoint.</li>
+            <li>
+              Set the URL to that endpoint and add header{" "}
+              <code className="rounded bg-ivory px-1 text-xs text-ink">Authorization</code> ={" "}
+              <code className="rounded bg-ivory px-1 text-xs text-ink">Bearer YOUR-KEY</code>.
+            </li>
+            <li>
+              Pick: steps, exercise time, resting heart rate, heart rate variability, respiratory
+              rate, VO₂ max, sleep analysis. Its format is understood as-is.
+            </li>
+          </ol>
         </div>
       </details>
 
