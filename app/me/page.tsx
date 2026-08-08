@@ -380,6 +380,19 @@ export default async function MePage({
         ) : (
           <p className="text-sm text-faint">Not connected.</p>
         )}
+        {process.env.INVITE_CODE && (
+          <p className="mt-4 text-sm">
+            <a
+              href={`/connect?invite=${encodeURIComponent(process.env.INVITE_CODE)}`}
+              className="text-sub underline decoration-hairline underline-offset-2 hover:text-ink"
+            >
+              Add another device
+            </a>
+            <span className="ml-2 text-xs text-faint">
+              — fills gaps your main one misses; nothing gets double-counted
+            </span>
+          </p>
+        )}
         <form method="post" action="/api/auth/logout" className="mt-4">
           <button className="text-sm text-faint underline decoration-hairline underline-offset-2 hover:text-sub">
             Log out (keeps data)

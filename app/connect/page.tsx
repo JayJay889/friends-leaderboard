@@ -52,43 +52,53 @@ function Explainers() {
 }
 
 /**
- * One tap per device. No user-agent guessing: a WHOOP wearer is on either
- * platform, and guessing wrong costs more than a deliberate tap. Each path
- * carries only the caveat that applies to it.
+ * One card per device, all three equal weight. No user-agent guessing: a WHOOP
+ * wearer is on either platform, and guessing wrong costs more than a deliberate
+ * tap. Each card carries only the caveat that applies to it — the Google account
+ * warning belongs to Fitbit, the extra setup belongs to Apple.
  */
 function DevicePicker({ invite }: { invite: string }) {
   const q = `?invite=${encodeURIComponent(invite)}`;
+  const card =
+    "block rounded-xl border border-hairline bg-ivory px-4 py-3.5 transition-colors hover:border-brass/60";
+
   return (
     <div className="space-y-3">
-      <a
-        href={`/api/auth/login${q}`}
-        className="block rounded-xl bg-brass px-4 py-4 text-center text-lg font-semibold text-[#101518] shadow-card transition-colors hover:bg-brass-soft"
-      >
-        Fitbit
+      <a href={`/api/auth/login${q}`} className={card}>
+        <span className="font-display text-lg font-semibold text-ink">Fitbit</span>
+        <span className="mt-0.5 block text-sm text-sub">
+          Sign in with the Google account your Fitbit is on — any other account lands here
+          empty.
+        </span>
       </a>
-      <p className="rounded-lg border-l-2 border-lagoon bg-lagoon/5 px-3.5 py-2.5 text-sm leading-snug text-sub">
-        <strong className="font-semibold text-lagoon">
-          Use the Google account your Fitbit is on.
-        </strong>{" "}
-        Any other account lands here empty.
-      </p>
+
       {whoopConfigured() && (
-        <a
-          href={`/api/auth/whoop/login${q}`}
-          className="block rounded-xl border border-hairline bg-ivory px-4 py-4 text-center text-lg font-semibold text-ink transition-colors hover:border-brass/50"
-        >
-          WHOOP
+        <a href={`/api/auth/whoop/login${q}`} className={card}>
+          <span className="font-display text-lg font-semibold text-ink">WHOOP</span>
+          <span className="mt-0.5 block text-sm text-sub">
+            Sign in with WHOOP. One tap, nothing to install.
+          </span>
         </a>
       )}
-      <a
-        href={`/api/auth/apple/start${q}`}
-        className="block rounded-xl border border-hairline bg-ivory px-4 py-4 text-center text-lg font-semibold text-ink transition-colors hover:border-brass/50"
-      >
-        Apple Watch
+
+      <a href={`/api/auth/apple/start${q}`} className={card}>
+        <span className="font-display text-lg font-semibold text-ink">Apple Watch</span>
+        <span className="mt-0.5 block text-sm text-sub">
+          A few extra steps on your iPhone — Apple keeps health data on the phone, so the phone
+          has to send it.
+        </span>
       </a>
-      <p className="text-center text-xs text-faint">
-        Apple Watch needs a few extra steps on your iPhone — Apple keeps health data on the
-        phone.
+
+      {/*
+        Honest guidance rather than an upsell: a second device only earns its
+        keep when it fills a gap. WHOOP reports no VO₂ max, which is what the
+        Fitness and Age Defied boards are built on.
+      */}
+      <p className="rounded-lg border-l-2 border-lagoon bg-lagoon/5 px-3.5 py-2.5 text-sm leading-snug text-sub">
+        <strong className="font-semibold text-lagoon">Wearing more than one?</strong> Connect
+        one now — you can add another later from your profile. Worth it mainly for WHOOP
+        wearers: adding your iPhone fills in VO₂ max, which unlocks the Fitness and Age Defied
+        boards. We keep the better number for each measurement, never double-count.
       </p>
     </div>
   );
