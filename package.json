@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "dev:demo": "DEMO_MODE=1 next dev"
   },
   "dependencies": {
     "@dicebear/collection": "^9.4.2",

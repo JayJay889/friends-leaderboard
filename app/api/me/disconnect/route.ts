@@ -4,12 +4,15 @@ import { db, schema } from "@/db";
 import { decrypt } from "@/lib/crypto";
 import { revokeToken } from "@/lib/google";
 import { currentUserId } from "@/lib/session";
+import { revokeToken as revokeWhoop } from "@/lib/whoop";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Full disconnect (GDPR-style): revokes the Google token, then deletes the
- * user row — oauth_tokens and daily_metrics cascade-delete with it.
+ * Full disconnect (GDPR-style): revokes every connected provider, then deletes
+ * the user row — identities, oauth_tokens, apple_pairings and daily_metrics all
+ * cascade-delete with it. WHOOP's developer terms require this to be reachable
+ * in-app, which it is, from /me.
  */
 export async function POST(req: NextRequest) {
   const userId = currentUserId();
@@ -20,12 +23,17 @@ export async function POST(req: NextRequest) {
     .from(schema.oauthTokens)
     .where(eq(schema.oauthTokens.userId, userId));
 
-  if (tokens.length > 0) {
+  for (const token of tokens) {
     try {
-      await revokeToken(decrypt(tokens[0].refreshToken));
+      if (token.provider === "whoop") {
+        // WHOOP revokes by access token, not refresh token.
+        if (token.accessToken) await revokeWhoop(decrypt(token.accessToken));
+      } else {
+        await revokeToken(decrypt(token.refreshToken));
+      }
     } catch (e) {
-      // Still delete local data even if Google revocation hiccups.
-      console.error("Token revocation failed (continuing with deletion):", e);
+      // Still delete local data even if a provider's revocation hiccups.
+      console.error(`${token.provider} revocation failed (continuing with deletion):`, e);
     }
   }
 

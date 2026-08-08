@@ -51,10 +51,11 @@ function MoverRow({ mover }: { mover: StoryPerson & { spots: number } }) {
 export default async function TvPage({
   searchParams,
 }: {
-  searchParams: { interval?: string; top?: string };
+  searchParams: { interval?: string; top?: string; refresh?: string };
 }) {
   const [data, hall] = await Promise.all([getLeaderboardData(), getHallOfFame()]);
   const intervalSec = Math.max(5, Number(searchParams.interval) || 20);
+  const refreshSec = Math.max(15, Number(searchParams.refresh) || 60);
   const top = Math.min(10, Math.max(3, Number(searchParams.top) || 5));
 
   if (!data) {
@@ -270,6 +271,7 @@ export default async function TvPage({
       slides={slides}
       titles={titles}
       intervalSec={intervalSec}
+      refreshSec={refreshSec}
       corner={joinUrl && <QrJoinBadge url={joinUrl} />}
     />
   );

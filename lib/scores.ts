@@ -149,7 +149,11 @@ export function windowStats(rows: DailyMetricRow[]): UserWindowStats {
     avgRemMinutes: avg(nums((r) => r.remMinutes)),
     avgRestingHr: avg(nums((r) => r.restingHeartRate)),
     avgVo2max: avg(nums((r) => r.vo2maxEstimate)),
-    avgHrv: avg(nums((r) => r.hrvDailyRmssd)),
+    // Apple reports SDNN where the others report RMSSD. Falling back is safe
+    // ONLY because one member's rows come from one resolved source, so every
+    // value in a given baseline is the same metric and recovery scores the
+    // RATIO to it. Never average or compare HRV ACROSS members.
+    avgHrv: avg(nums((r) => r.hrvDailyRmssd ?? r.hrvSdnn)),
     avgBreathingRate: avg(nums((r) => r.breathingRate)),
   };
 }

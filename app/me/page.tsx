@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import Avatar from "@/components/Avatar";
 import AvatarStudio from "@/components/AvatarStudio";
@@ -8,6 +8,8 @@ import Sparkline from "@/components/Sparkline";
 import { db, schema } from "@/db";
 import { formatHours, getLeaderboardData, realAge } from "@/lib/leaderboards";
 import { SCOPE } from "@/lib/google";
+import { PROVIDER_LABELS } from "@/lib/providers/types";
+import { prioritiesFor, resolveRows } from "@/lib/resolve";
 import { clubAge, recoveryScore, sleepScore, strainScale, windowStats } from "@/lib/scores";
 import { currentUserId } from "@/lib/session";
 
@@ -64,17 +66,27 @@ export default async function MePage({
   const [user] = await db().select().from(schema.users).where(eq(schema.users.id, userId));
   if (!user) redirect("/connect");
 
-  const [token] = await db()
+  const tokens = await db()
     .select()
     .from(schema.oauthTokens)
     .where(eq(schema.oauthTokens.userId, userId));
+  const token = tokens[0];
 
-  const rows = await db()
+  const identities = await db()
+    .select()
+    .from(schema.identities)
+    .where(eq(schema.identities.userId, userId));
+
+  // Bounded by date, not by row count: with several devices a single day can
+  // produce several rows, and a LIMIT would slice one of them off mid-day.
+  const rawRows = await db()
     .select()
     .from(schema.dailyMetrics)
-    .where(eq(schema.dailyMetrics.userId, userId))
-    .orderBy(desc(schema.dailyMetrics.date))
-    .limit(35);
+    .where(
+      and(eq(schema.dailyMetrics.userId, userId), gte(schema.dailyMetrics.date, isoDaysAgo(35))),
+    )
+    .orderBy(desc(schema.dailyMetrics.date));
+  const rows = resolveRows(rawRows, prioritiesFor([user], identities).get(userId)!).reverse();
 
   const boards = await getLeaderboardData(userId);
   const week = windowStats(rows.filter((r) => r.date >= isoDaysAgo(7)));
@@ -350,12 +362,19 @@ export default async function MePage({
       {/* Connection */}
       <section className="rounded-2xl border border-hairline bg-card p-5 shadow-card">
         <h2 className="mb-3 font-display text-lg font-semibold">Connection &amp; data</h2>
-        {token ? (
+        {tokens.length > 0 ? (
           <>
-            <p className="mb-4 text-sm text-sub">
-              Connected since {token.connectedAt.toISOString().slice(0, 10)} ·{" "}
-              {token.grantedScopes.filter((sc) => SCOPE_LABELS[sc]).length}/3 data scopes granted
-            </p>
+            <ul className="mb-4 space-y-1 text-sm text-sub">
+              {tokens.map((t) => (
+                <li key={t.provider}>
+                  <strong className="font-semibold text-ink">{PROVIDER_LABELS[t.provider]}</strong>{" "}
+                  since {t.connectedAt.toISOString().slice(0, 10)}
+                  {t.provider === "google" &&
+                    ` · ${t.grantedScopes.filter((sc) => SCOPE_LABELS[sc]).length}/3 data scopes granted`}
+                  {tokens.length > 1 && user.primarySource === t.provider && " · leads"}
+                </li>
+              ))}
+            </ul>
             <DisconnectButton />
           </>
         ) : (

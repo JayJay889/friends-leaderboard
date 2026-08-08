@@ -2,6 +2,7 @@ import { and, gte, lt } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { DailyMetricRow, User } from "@/db/schema";
 import type { AvatarOptions } from "./avatar";
+import { prioritiesFor, resolveByUser } from "./resolve";
 import { clubAge, healthScores, rankPercentile, strainScale, windowStats } from "./scores";
 import { demoData } from "./demo";
 
@@ -246,17 +247,15 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
       .where(and(gte(schema.dailyMetrics.date, prevSince), lt(schema.dailyMetrics.date, since)));
   }
 
-  const byUser = (rs: DailyMetricRow[]) => {
-    const m = new Map<string, DailyMetricRow[]>();
-    for (const r of rs) {
-      if (!m.has(r.userId)) m.set(r.userId, []);
-      m.get(r.userId)!.push(r);
-    }
-    return m;
-  };
-
-  const rowsByUser = byUser(rows);
-  const prevByUser = byUser(prevRows);
+  // One member can wear several devices, so collapse per-source rows into one
+  // row per day before anything scores them (see lib/resolve.ts).
+  const identities =
+    process.env.DEMO_MODE === "1"
+      ? []
+      : await db().select().from(schema.identities);
+  const priorities = prioritiesFor(users, identities);
+  const rowsByUser = resolveByUser(rows, priorities);
+  const prevByUser = resolveByUser(prevRows, priorities);
   const current = buildBoardScores(users, rowsByUser);
   const previous = buildBoardScores(users, prevByUser);
   const userById = new Map(users.map((u) => [u.id, u]));

@@ -3,8 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-const REFRESH_MS = 5 * 60_000; // silent data refresh
-
 /**
  * Full-screen slide rotator for kiosk/TV use. Server-rendered slides come in
  * as children; this only handles timing, fade, and input.
@@ -13,11 +11,14 @@ export default function TvRotator({
   slides,
   titles,
   intervalSec,
+  refreshSec = 60,
   corner,
 }: {
   slides: React.ReactNode[];
   titles: string[];
   intervalSec: number;
+  /** How often to silently re-pull the boards, so new joiners show up fast. */
+  refreshSec?: number;
   corner?: React.ReactNode;
 }) {
   const router = useRouter();
@@ -34,9 +35,9 @@ export default function TvRotator({
   }, [index, go, intervalSec]);
 
   useEffect(() => {
-    const t = setInterval(() => router.refresh(), REFRESH_MS);
+    const t = setInterval(() => router.refresh(), refreshSec * 1000);
     return () => clearInterval(t);
-  }, [router]);
+  }, [router, refreshSec]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

@@ -2,6 +2,7 @@ import { db, schema } from "@/db";
 import type { DailyMetricRow, User } from "@/db/schema";
 import { demoData } from "./demo";
 import { compositeScores, type StoryPerson } from "./leaderboards";
+import { prioritiesFor, resolveByUser } from "./resolve";
 import { mondayOf } from "./trends";
 
 /**
@@ -48,6 +49,10 @@ export async function getHallOfFame(): Promise<HallOfFame | null> {
     if (!process.env.DATABASE_URL) return null;
     users = await db().select().from(schema.users);
     rows = await db().select().from(schema.dailyMetrics);
+    // Collapse multi-device rows before any week is scored, so crowns are decided
+    // on the same resolved numbers the boards show.
+    const identities = await db().select().from(schema.identities);
+    rows = [...resolveByUser(rows, prioritiesFor(users, identities)).values()].flat();
   }
   if (rows.length === 0) return null;
 

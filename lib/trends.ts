@@ -2,6 +2,7 @@ import { gte } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { DailyMetricRow } from "@/db/schema";
 import { demoData } from "./demo";
+import { prioritiesFor, resolveByUser } from "./resolve";
 import { sleepScore } from "./scores";
 
 const WEEKS = 10;
@@ -48,6 +49,12 @@ export async function getGroupTrends(): Promise<GroupTrends | null> {
       .select()
       .from(schema.dailyMetrics)
       .where(gte(schema.dailyMetrics.date, since.toISOString().slice(0, 10)));
+    // Without this a two-device member would count twice in every group average.
+    const [users, identities] = await Promise.all([
+      db().select().from(schema.users),
+      db().select().from(schema.identities),
+    ]);
+    rows = [...resolveByUser(rows, prioritiesFor(users, identities)).values()].flat();
   }
   if (rows.length === 0) return null;
 
