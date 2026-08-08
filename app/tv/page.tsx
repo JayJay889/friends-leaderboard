@@ -55,7 +55,8 @@ export default async function TvPage({
 }) {
   const [data, hall] = await Promise.all([getLeaderboardData(), getHallOfFame()]);
   const intervalSec = Math.max(5, Number(searchParams.interval) || 20);
-  const refreshSec = Math.max(15, Number(searchParams.refresh) || 60);
+  // 30s: the gap between someone finishing sign-up and seeing themselves.
+  const refreshSec = Math.max(15, Number(searchParams.refresh) || 30);
   const top = Math.min(10, Math.max(3, Number(searchParams.top) || 5));
 
   if (!data) {
@@ -258,8 +259,58 @@ export default async function TvPage({
     </div>
   );
 
-  const slides = [podium, boards, movers, ...(championship ? [championship] : [])];
-  const titles = ["The Podium", "The Boards", "The Movers", ...(championship ? ["The Championship"] : [])];
+  // Someone who joined in the last few minutes is still standing in front of the
+  // screen. Give them a slide of their own — seeing your own name appear is the
+  // proof that it worked, and no amount of "connected!" copy on a phone does it.
+  const newcomer = data.newcomers[0] ?? null;
+  const welcome = newcomer ? (
+    <div className="mx-auto flex h-full max-w-4xl flex-col items-center justify-center text-center">
+      <p className="label-caps !text-brass">Just joined</p>
+      <div className="my-7">
+        <Avatar
+          name={newcomer.displayName}
+          charm={newcomer.avatarEmoji}
+          options={newcomer.avatarOptions}
+          size={168}
+          ring
+        />
+      </div>
+      <h1 className="font-display text-6xl font-bold tracking-tight text-ink">
+        {newcomer.displayName}
+      </h1>
+      {newcomer.rank ? (
+        <p className="mt-5 font-display text-3xl text-sub">
+          straight in at{" "}
+          <span className="font-bold text-brass">
+            #{newcomer.rank}
+            <span className="text-2xl text-faint"> of {newcomer.fieldSize}</span>
+          </span>
+        </p>
+      ) : (
+        <p className="mt-5 font-display text-2xl text-sub">
+          synced — ranking starts with tomorrow&apos;s numbers
+        </p>
+      )}
+      <p className="mt-3 text-lg text-faint">
+        on {newcomer.boardsLanded} of {newcomer.boardsTotal} boards
+      </p>
+    </div>
+  ) : null;
+
+  const slides = [
+    ...(welcome ? [welcome] : []),
+    podium,
+    boards,
+    movers,
+    ...(championship ? [championship] : []),
+  ];
+  const titles = [
+    ...(welcome ? ["Welcome"] : []),
+    "The Podium",
+    "The Boards",
+    "The Movers",
+    ...(championship ? ["The Championship"] : []),
+  ];
 
   // Scanning lands on /connect with the invite code prefilled.
   const joinUrl = process.env.INVITE_CODE
@@ -272,6 +323,7 @@ export default async function TvPage({
       titles={titles}
       intervalSec={intervalSec}
       refreshSec={refreshSec}
+      alertKey={newcomer?.userId}
       corner={joinUrl && <QrJoinBadge url={joinUrl} />}
     />
   );

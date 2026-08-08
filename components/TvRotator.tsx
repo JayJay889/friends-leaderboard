@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * Full-screen slide rotator for kiosk/TV use. Server-rendered slides come in
@@ -11,7 +11,8 @@ export default function TvRotator({
   slides,
   titles,
   intervalSec,
-  refreshSec = 60,
+  refreshSec = 30,
+  alertKey,
   corner,
 }: {
   slides: React.ReactNode[];
@@ -19,10 +20,17 @@ export default function TvRotator({
   intervalSec: number;
   /** How often to silently re-pull the boards, so new joiners show up fast. */
   refreshSec?: number;
+  /**
+   * Identifies a slide worth interrupting the rotation for — currently whoever
+   * just joined. When this changes to a new value the rotator jumps to slide 0
+   * so the person watching sees themselves, instead of waiting out the cycle.
+   */
+  alertKey?: string;
   corner?: React.ReactNode;
 }) {
   const router = useRouter();
   const [index, setIndex] = useState(0);
+  const shownAlert = useRef<string | undefined>(undefined);
 
   const go = useCallback(
     (next: number) => setIndex(((next % slides.length) + slides.length) % slides.length),
@@ -33,6 +41,18 @@ export default function TvRotator({
     const t = setInterval(() => go(index + 1), intervalSec * 1000);
     return () => clearInterval(t);
   }, [index, go, intervalSec]);
+
+  // A refresh can add or drop the welcome slide, which shifts every index.
+  // Jump to a newly arrived newcomer; otherwise just stay in range.
+  useEffect(() => {
+    if (alertKey && alertKey !== shownAlert.current) {
+      shownAlert.current = alertKey;
+      setIndex(0);
+      return;
+    }
+    if (!alertKey) shownAlert.current = undefined;
+    setIndex((i) => (i < slides.length ? i : 0));
+  }, [alertKey, slides.length]);
 
   useEffect(() => {
     const t = setInterval(() => router.refresh(), refreshSec * 1000);

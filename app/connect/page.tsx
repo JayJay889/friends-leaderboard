@@ -80,8 +80,16 @@ function DevicePicker({ invite }: { invite: string }) {
           WHOOP
         </a>
       )}
-      {/* Apple Watch lands in Phase 3 — no button until the ingest path exists,
-          so nobody taps through to a dead end. */}
+      <a
+        href={`/api/auth/apple/start${q}`}
+        className="block rounded-xl border border-hairline bg-ivory px-4 py-4 text-center text-lg font-semibold text-ink transition-colors hover:border-brass/50"
+      >
+        Apple Watch
+      </a>
+      <p className="text-center text-xs text-faint">
+        Apple Watch needs a few extra steps on your iPhone — Apple keeps health data on the
+        phone.
+      </p>
     </div>
   );
 }

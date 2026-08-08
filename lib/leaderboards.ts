@@ -61,10 +61,29 @@ export interface Board {
   entries: BoardEntry[];
 }
 
+/**
+ * Someone who joined minutes ago. Drives the TV's welcome moment: they scan the
+ * QR while standing in front of the screen, and their name should appear on it
+ * before they walk away.
+ */
+export interface Newcomer extends StoryPerson {
+  userId: string;
+  /** Composite position, or null while they have too little data to rank. */
+  rank: number | null;
+  fieldSize: number;
+  /** Boards they already appear on — proof the connection actually worked. */
+  boardsLanded: number;
+  boardsTotal: number;
+}
+
+/** How long after joining someone still counts as "just joined". */
+export const NEWCOMER_WINDOW_MIN = 10;
+
 export interface LeaderboardData {
   boards: Board[];
   composite: BoardEntry[]; // "Healthiest Human"
   story: WeeklyStory;
+  newcomers: Newcomer[];
   windowLabel: string;
   demo: boolean;
 }
@@ -304,6 +323,24 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
     prevRank: null,
   }));
 
+  const freshSince = Date.now() - NEWCOMER_WINDOW_MIN * 60_000;
+  const newcomers: Newcomer[] = users
+    .filter((u) => u.createdAt.getTime() >= freshSince)
+    .map((u) => {
+      const seat = composite.findIndex((c) => c.userId === u.id);
+      return {
+        userId: u.id,
+        displayName: u.displayName,
+        avatarEmoji: u.avatarEmoji,
+        avatarOptions: u.avatarOptions ?? null,
+        rank: seat === -1 ? null : seat + 1,
+        fieldSize: composite.length,
+        boardsLanded: boards.filter((b) => b.entries.some((e) => e.userId === u.id)).length,
+        boardsTotal: boards.length,
+      };
+    })
+    .sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
+
   return {
     boards,
     composite,
@@ -311,6 +348,7 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
       ...buildStory(boards, composite),
       formGuide: buildFormGuide(users, rowsByUser, prevByUser),
     },
+    newcomers,
     windowLabel: "Rolling 7 days",
     demo: process.env.DEMO_MODE === "1",
   };

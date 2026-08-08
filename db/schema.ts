@@ -73,11 +73,20 @@ export const oauthTokens = pgTable(
  * Only the hash is stored — the token itself is shown once, at pairing.
  */
 export const applePairings = pgTable("apple_pairings", {
-  tokenHash: text("token_hash").primaryKey(),
+  id: text("id").primaryKey(),
   userId: text("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
+  /** Short code the phone types once to claim its token. Single use. */
+  pairCode: text("pair_code").unique(),
+  pairCodeExpiresAt: timestamp("pair_code_expires_at", { withTimezone: true }),
+  /**
+   * SHA-256 of the bearer token, set when the code is redeemed. The raw token
+   * is returned exactly once, to the phone, and never stored.
+   */
+  tokenHash: text("token_hash").unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  /** Last successful ingest — drives the "data is arriving" check on setup. */
   lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
   revokedAt: timestamp("revoked_at", { withTimezone: true }),
 });
