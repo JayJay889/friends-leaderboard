@@ -1,7 +1,7 @@
 import { db, schema } from "@/db";
 import type { DailyMetricRow, User } from "@/db/schema";
 import { demoData } from "./demo";
-import { compositeScores, type StoryPerson } from "./leaderboards";
+import { compositeScores, efficiencyBaselines, type StoryPerson } from "./leaderboards";
 import { prioritiesFor, resolveByUser } from "./resolve";
 import { mondayOf } from "./trends";
 
@@ -56,6 +56,10 @@ export async function getHallOfFame(): Promise<HallOfFame | null> {
   }
   if (rows.length === 0) return null;
 
+  // Baselines come from the whole history rather than the week being judged, so
+  // a week is scored against how that person usually sleeps.
+  const baselines = efficiencyBaselines(rows);
+
   const currentWeekStart = mondayOf(new Date().toISOString().slice(0, 10));
 
   // Bucket rows into completed weeks only.
@@ -71,7 +75,7 @@ export async function getHallOfFame(): Promise<HallOfFame | null> {
 
   const honors: WeeklyHonor[] = [];
   for (const wk of [...byWeek.keys()].sort()) {
-    const winner = compositeScores(users, byWeek.get(wk)!)[0];
+    const winner = compositeScores(users, byWeek.get(wk)!, baselines)[0];
     if (!winner) continue;
     honors.push({
       weekStart: wk,

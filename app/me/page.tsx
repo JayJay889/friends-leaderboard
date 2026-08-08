@@ -89,22 +89,32 @@ export default async function MePage({
   const rows = resolveRows(rawRows, prioritiesFor([user], identities).get(userId)!).reverse();
 
   const boards = await getLeaderboardData(userId);
-  const week = windowStats(rows.filter((r) => r.date >= isoDaysAgo(7)));
-  const month = windowStats(rows);
+  // Sleep restoration is judged against your own 30-day normal, so the number
+  // means the same thing whichever watch you wear.
+  const effValues = rows.map((r) => r.sleepEfficiency).filter((v): v is number => v != null);
+  const effBaseline =
+    effValues.length >= 3 ? effValues.reduce((a, b) => a + b, 0) / effValues.length : null;
+  const week = windowStats(rows.filter((r) => r.date >= isoDaysAgo(7)), effBaseline);
+  const month = windowStats(rows, effBaseline);
 
   // "Your day" hero: latest sleep night, latest strain day, recovery vs your
   // own 30-day HRV baseline (WHOOP-style personal banding).
   const sleepRow = rows.find((r) => r.sleepMinutes != null) ?? null;
   const strainRow = rows.find((r) => r.activeZoneMinutes != null) ?? null;
-  const hrvRow = rows.find((r) => r.hrvDailyRmssd != null) ?? null;
-  const hrvVals = rows.map((r) => r.hrvDailyRmssd).filter((v): v is number => v != null);
+  // Apple reports SDNN where the others report RMSSD. Safe to fall through here
+  // because this is all one person measured one way, and recovery only ever uses
+  // the ratio to their own baseline.
+  const hrvOf = (r: { hrvDailyRmssd: number | null; hrvSdnn: number | null }) =>
+    r.hrvDailyRmssd ?? r.hrvSdnn;
+  const hrvRow = rows.find((r) => hrvOf(r) != null) ?? null;
+  const hrvVals = rows.map(hrvOf).filter((v): v is number => v != null);
   const hrvBaseline = hrvVals.length > 2 ? hrvVals.reduce((a, b) => a + b, 0) / hrvVals.length : null;
   const needBase = month.sleepNeed;
-  const lastSleepScore = sleepRow ? sleepScore(sleepRow, needBase) : null;
+  const lastSleepScore = sleepRow ? sleepScore(sleepRow, needBase, effBaseline) : null;
   const rhrRow = rows.find((r) => r.restingHeartRate != null) ?? null;
   const recoveryPct = recoveryScore(
     {
-      hrv: hrvRow?.hrvDailyRmssd ?? null,
+      hrv: hrvRow ? hrvOf(hrvRow) : null,
       restingHr: rhrRow?.restingHeartRate ?? null,
       sleepScore: lastSleepScore,
     },
@@ -144,9 +154,9 @@ export default async function MePage({
   const trends: { label: string; color: string; pick: (r: any) => number | null; fmt?: (v: number) => string }[] = [
     { label: "Steps", color: "text-metric-strain", pick: (r) => r.steps, fmt: (v) => new Intl.NumberFormat("en-US").format(Math.round(v)) },
     { label: "Active Zone Minutes", color: "text-metric-strain", pick: (r) => r.activeZoneMinutes },
-    { label: "Sleep score", color: "text-metric-sleep", pick: (r) => sleepScore(r, month.sleepNeed) },
+    { label: "Sleep score", color: "text-metric-sleep", pick: (r) => sleepScore(r, month.sleepNeed, effBaseline) },
     { label: "Resting HR", color: "text-metric-health", pick: (r) => r.restingHeartRate, fmt: (v) => `${Math.round(v)} bpm` },
-    { label: "Battery (HRV)", color: "text-metric-recovery", pick: (r) => r.hrvDailyRmssd, fmt: (v) => `${Math.round(v)} ms` },
+    { label: "Battery (HRV)", color: "text-metric-recovery", pick: (r) => r.hrvDailyRmssd ?? r.hrvSdnn, fmt: (v) => `${Math.round(v)} ms` },
   ];
 
   const numbers: [string, string | null, number | null][] = [

@@ -107,8 +107,35 @@ const fmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 
 type RawBoard = { userId: string; score: number; display: string }[];
 
-function buildBoardScores(users: User[], rowsByUser: Map<string, DailyMetricRow[]>) {
-  const stats = new Map(users.map((u) => [u.id, windowStats(rowsByUser.get(u.id) ?? [])]));
+/**
+ * Long-run efficiency per user, for the sleep score's restoration component.
+ * Must be computed over a WIDER window than the one being scored, or every
+ * member sits at the neutral mark and the component says nothing.
+ */
+export function efficiencyBaselines(rows: DailyMetricRow[]): Map<string, number> {
+  const byUser = new Map<string, number[]>();
+  for (const r of rows) {
+    if (r.sleepEfficiency == null) continue;
+    if (!byUser.has(r.userId)) byUser.set(r.userId, []);
+    byUser.get(r.userId)!.push(r.sleepEfficiency);
+  }
+  const out = new Map<string, number>();
+  for (const [userId, values] of byUser) {
+    // Under three nights there is no "usual" yet; the component stays off.
+    if (values.length < 3) continue;
+    out.set(userId, values.reduce((a, b) => a + b, 0) / values.length);
+  }
+  return out;
+}
+
+function buildBoardScores(
+  users: User[],
+  rowsByUser: Map<string, DailyMetricRow[]>,
+  baselines: Map<string, number> = new Map(),
+) {
+  const stats = new Map(
+    users.map((u) => [u.id, windowStats(rowsByUser.get(u.id) ?? [], baselines.get(u.id) ?? null)]),
+  );
 
   const strain: RawBoard = [];
   const sleep: RawBoard = [];
@@ -133,6 +160,7 @@ function buildBoardScores(users: User[], rowsByUser: Map<string, DailyMetricRow[
       userId: u.id,
       rhr: stats.get(u.id)!.avgRestingHr,
       vo2: stats.get(u.id)!.avgVo2max,
+      vo2Source: stats.get(u.id)!.vo2Source,
     })),
   );
   for (const [userId, score] of healthMap) {
@@ -211,8 +239,9 @@ function selfDetails(
 export function compositeScores(
   users: User[],
   rowsByUser: Map<string, DailyMetricRow[]>,
+  baselines: Map<string, number> = new Map(),
 ): (StoryPerson & { userId: string; score: number })[] {
-  const scores = buildBoardScores(users, rowsByUser);
+  const scores = buildBoardScores(users, rowsByUser, baselines);
   const userById = new Map(users.map((u) => [u.id, u]));
   const pcts = new Map<string, number[]>();
   for (const meta of BOARD_META) {
@@ -250,8 +279,14 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
   let rows: DailyMetricRow[];
   let prevRows: DailyMetricRow[];
 
+  // 30 days of history, wider than either scoring window, so sleep efficiency
+  // can be judged against each member's own normal instead of a fixed cutoff
+  // that only ever suited Fitbit.
+  let baselineRows: DailyMetricRow[];
+
   if (process.env.DEMO_MODE === "1") {
     ({ users, rows, prevRows } = demoData());
+    baselineRows = demoData().allRows;
     // In demo mode pretend the first fake friend is "you" so the self-detail UI is visible.
     viewerUserId ??= users[0]?.id;
   } else {
@@ -259,11 +294,13 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
     const since = isoDaysAgo(7);
     const prevSince = isoDaysAgo(14);
     users = await db().select().from(schema.users);
-    rows = await db().select().from(schema.dailyMetrics).where(gte(schema.dailyMetrics.date, since));
-    prevRows = await db()
+    // One query instead of two, then sliced — the baseline window contains both.
+    baselineRows = await db()
       .select()
       .from(schema.dailyMetrics)
-      .where(and(gte(schema.dailyMetrics.date, prevSince), lt(schema.dailyMetrics.date, since)));
+      .where(gte(schema.dailyMetrics.date, isoDaysAgo(30)));
+    rows = baselineRows.filter((r) => r.date >= since);
+    prevRows = baselineRows.filter((r) => r.date >= prevSince && r.date < since);
   }
 
   // One member can wear several devices, so collapse per-source rows into one
@@ -275,8 +312,11 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
   const priorities = prioritiesFor(users, identities);
   const rowsByUser = resolveByUser(rows, priorities);
   const prevByUser = resolveByUser(prevRows, priorities);
-  const current = buildBoardScores(users, rowsByUser);
-  const previous = buildBoardScores(users, prevByUser);
+  const baselines = efficiencyBaselines(
+    [...resolveByUser(baselineRows, priorities).values()].flat(),
+  );
+  const current = buildBoardScores(users, rowsByUser, baselines);
+  const previous = buildBoardScores(users, prevByUser, baselines);
   const userById = new Map(users.map((u) => [u.id, u]));
   const viewerStats = viewerUserId ? windowStats(rowsByUser.get(viewerUserId) ?? []) : null;
   const viewerUser = viewerUserId ? users.find((u) => u.id === viewerUserId) ?? null : null;

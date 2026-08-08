@@ -1,4 +1,4 @@
-import type { DailyMetricRow } from "@/db/schema";
+import type { DailyMetricRow, Source } from "@/db/schema";
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
@@ -22,9 +22,42 @@ const REM_TARGET = 0.25;
  */
 const SHORTFALL_PENALTY = 1.5;
 
-/** Efficiency band that actually varies. Fitbit staging reports 97–99% for
- *  nearly everyone, so anything below ~90% is the real signal. */
-const EFFICIENCY_FLOOR = 90;
+/**
+ * How many points of restoration one percentage point of efficiency is worth,
+ * measured against the sleeper's own normal. Ten points below your usual wipes
+ * the component out; ten above maxes it.
+ */
+const EFFICIENCY_SLOPE = 5;
+
+/**
+ * What a perfectly typical night is worth. Not 50: the old absolute scale paid
+ * a Fitbit wearer around 80 here simply for reporting 98% efficiency, and
+ * centring on 50 would have quietly knocked 8 points off everyone's sleep score
+ * and broken the calibration against consumer apps. Checked against 31 real
+ * nights — at 75 the group means land within ~2 points of the old formula while
+ * the hardware bias is gone.
+ */
+const EFFICIENCY_NEUTRAL = 75;
+
+/**
+ * Efficiency is only comparable to itself.
+ *
+ * This used to be an absolute floor of 90%, which was tuned on Fitbit — it
+ * reports 97–99% for nearly everyone. WHOOP and Apple measure the same night
+ * and normally report 85–95%, so an identical night scored 89 on a Fitbit and
+ * 69 on a WHOOP: a twenty point penalty for owning the wrong watch.
+ *
+ * Scoring against the person's own baseline removes that completely, because
+ * every value in a baseline comes from the same device as the night being
+ * scored. The cap below is the guard against the trap `sleepNeed` already
+ * learned: being typical should not earn full marks when your typical night is
+ * genuinely broken. It only bites below 75% efficiency, which is poor on any
+ * device, so it never punishes a brand for simply reporting lower numbers.
+ */
+function restorationScore(efficiency: number, baseline: number): number {
+  const ceiling = clamp(100 - Math.max(0, 75 - baseline) * EFFICIENCY_SLOPE, 40, 100);
+  return clamp(EFFICIENCY_NEUTRAL + (efficiency - baseline) * EFFICIENCY_SLOPE, 0, ceiling);
+}
 
 /**
  * Sleep score, 0–100, modelled on the published consumer scales:
@@ -36,10 +69,10 @@ const EFFICIENCY_FLOOR = 90;
  * stages     — deep and REM scored separately against healthy adult shares, then
  *              averaged. Null when the device reported no staging at all, so a
  *              missing-data night is renormalized rather than scored as zero.
- * restoration— efficiency, rescaled across the band that actually varies. Fitbit
- *              staging reports 97–99% for nearly everyone, so raw efficiency is
- *              almost a constant; below ~90% is where a genuinely broken night
- *              shows up, and that is what this component is for.
+ * restoration— efficiency measured against the sleeper's OWN normal, so it says
+ *              "worse night than usual" rather than "worse device than Fitbit".
+ *              Null when no baseline is available, and then renormalized away
+ *              rather than guessed at.
  *
  * Deliberately NOT a clone of Fitbit's number: their restoration input (sleeping
  * heart rate, restlessness) is never exposed by the API, so an exact match is
@@ -54,6 +87,12 @@ export function sleepScore(
     remMinutes: number | null;
   },
   needMinutes = 480,
+  /**
+   * The sleeper's own long-run efficiency. Without it the restoration component
+   * is skipped entirely and the score renormalizes over the rest — deliberately,
+   * since the alternative is scoring one brand's numbers on another's scale.
+   */
+  baselineEfficiency: number | null = null,
 ): number | null {
   const minutes = row.sleepMinutes;
   if (minutes == null || minutes <= 0) return null;
@@ -71,8 +110,8 @@ export function sleepScore(
       : null;
 
   const restoration =
-    row.sleepEfficiency != null
-      ? clamp(((row.sleepEfficiency - EFFICIENCY_FLOOR) / (100 - EFFICIENCY_FLOOR)) * 100, 0, 100)
+    row.sleepEfficiency != null && baselineEfficiency != null
+      ? restorationScore(row.sleepEfficiency, baselineEfficiency)
       : null;
 
   // Fitbit's published 50/25/25 split. Renormalized over whichever components
@@ -105,6 +144,14 @@ export interface UserWindowStats {
   avgRestingHr: number | null;
   avgVo2max: number | null;
   avgHrv: number | null;
+  /**
+   * True when avgHrv is Apple's SDNN rather than RMSSD. Same organ, different
+   * measurement, different scale — safe as a ratio to the person's own
+   * baseline, never safe compared to another person's number.
+   */
+  hrvIsSdnn: boolean;
+  /** Which device produced avgVo2max, since every vendor estimates it differently. */
+  vo2Source: Source | null;
   avgBreathingRate: number | null;
 }
 
@@ -113,8 +160,17 @@ function avg(values: number[]): number | null {
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
-/** Aggregates one user's daily rows (already restricted to the window). */
-export function windowStats(rows: DailyMetricRow[]): UserWindowStats {
+/**
+ * Aggregates one user's daily rows (already restricted to the window).
+ *
+ * `baselineEfficiency` should come from a LONGER window than `rows` — scoring a
+ * week against its own average would leave every member sitting at exactly the
+ * neutral mark, which is fair but carries no information.
+ */
+export function windowStats(
+  rows: DailyMetricRow[],
+  baselineEfficiency: number | null = null,
+): UserWindowStats {
   const nums = (pick: (r: DailyMetricRow) => number | null) =>
     rows.map(pick).filter((v): v is number => v != null);
 
@@ -134,8 +190,13 @@ export function windowStats(rows: DailyMetricRow[]): UserWindowStats {
         )
       : ADULT_SLEEP_NEED;
   const sleepScores = rows
-    .map((r) => sleepScore(r, sleepNeed))
+    .map((r) => sleepScore(r, sleepNeed, baselineEfficiency))
     .filter((v): v is number => v != null);
+
+  // Which HRV metric and which device we are actually holding. Derived from the
+  // rows rather than passed in, so it cannot drift out of step with the data.
+  const hrvIsSdnn = rows.some((r) => r.hrvSdnn != null) && rows.every((r) => r.hrvDailyRmssd == null);
+  const vo2Source = rows.find((r) => r.vo2maxEstimate != null)?.source ?? null;
 
   return {
     daysWithData: rows.length,
@@ -154,6 +215,8 @@ export function windowStats(rows: DailyMetricRow[]): UserWindowStats {
     // value in a given baseline is the same metric and recovery scores the
     // RATIO to it. Never average or compare HRV ACROSS members.
     avgHrv: avg(nums((r) => r.hrvDailyRmssd ?? r.hrvSdnn)),
+    hrvIsSdnn,
+    vo2Source,
     avgBreathingRate: avg(nums((r) => r.breathingRate)),
   };
 }
@@ -204,7 +267,7 @@ export function recoveryScore(
  * lacks VO2 max data but has resting HR.
  */
 export function healthScores(
-  entries: { userId: string; rhr: number | null; vo2: number | null }[],
+  entries: { userId: string; rhr: number | null; vo2: number | null; vo2Source?: Source | null }[],
 ): Map<string, number> {
   const withRhr = entries.filter((e) => e.rhr != null);
   const out = new Map<string, number>();
@@ -212,16 +275,36 @@ export function healthScores(
 
   // Index scale: 100 = group average (readable at a glance, nobody pinned).
   const rhrs = withRhr.map((e) => e.rhr!);
-  const vo2s = entries.filter((e) => e.vo2 != null).map((e) => e.vo2!);
   const rhrMean = rhrs.reduce((a, b) => a + b, 0) / rhrs.length;
-  const vo2Mean = vo2s.length ? vo2s.reduce((a, b) => a + b, 0) / vo2s.length : 0;
   const clampIndex = (v: number) => clamp(v, 10, 200);
+
+  /**
+   * VO₂ max is a vendor estimate, not a measurement — Apple derives it from
+   * outdoor walks and runs, Fitbit from its own model, and the two disagree on
+   * the same body. Comparing them directly ranks the algorithm as much as the
+   * person, so each member is measured against the average of people wearing
+   * the SAME device. Resting heart rate stays group-wide: it is an actual
+   * reading and comparable to within a couple of beats.
+   */
+  const vo2MeanBySource = new Map<string, number>();
+  for (const e of entries) {
+    if (e.vo2 == null) continue;
+    const key = e.vo2Source ?? "unknown";
+    const peers = entries.filter((o) => o.vo2 != null && (o.vo2Source ?? "unknown") === key);
+    // One person on a device is their own average, which tells us nothing.
+    if (peers.length > 1) {
+      vo2MeanBySource.set(key, peers.reduce((a, o) => a + o.vo2!, 0) / peers.length);
+    }
+  }
 
   for (const e of withRhr) {
     const rhrScore = clampIndex((rhrMean / e.rhr!) * 100); // lower HR = higher score
-    if (e.vo2 != null && vo2s.length > 1) {
-      out.set(e.userId, Math.round(0.4 * rhrScore + 0.6 * clampIndex((e.vo2 / vo2Mean) * 100)));
+    const peerMean = e.vo2 != null ? vo2MeanBySource.get(e.vo2Source ?? "unknown") : undefined;
+    if (e.vo2 != null && peerMean) {
+      out.set(e.userId, Math.round(0.4 * rhrScore + 0.6 * clampIndex((e.vo2 / peerMean) * 100)));
     } else {
+      // No comparable peers: fall back to heart rate alone, as we already do
+      // for members whose device reports no VO₂ max at all.
       out.set(e.userId, Math.round(rhrScore));
     }
   }
@@ -240,7 +323,9 @@ export function clubAge(s: UserWindowStats): number | null {
   let age = 20 + (45 - s.avgVo2max) / 0.4;
   const nudge = (v: number, cap = 3) => Math.max(-cap, Math.min(cap, v));
   if (s.avgRestingHr != null) age += nudge((s.avgRestingHr - 60) * 0.15);
-  if (s.avgHrv != null) age += nudge((45 - s.avgHrv) * 0.05);
+  // Skipped for Apple wearers: 45 is an RMSSD figure, and SDNN runs higher on
+  // the same person, which quietly handed them about a year of free youth.
+  if (s.avgHrv != null && !s.hrvIsSdnn) age += nudge((45 - s.avgHrv) * 0.05);
   if (s.avgSleepScore != null) age += nudge((80 - s.avgSleepScore) * 0.08);
   if (s.totalAzm != null) age += nudge((150 - s.totalAzm) * 0.005, 2);
   return Math.round(Math.max(18, Math.min(80, age)));

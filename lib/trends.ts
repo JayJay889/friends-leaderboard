@@ -2,6 +2,7 @@ import { gte } from "drizzle-orm";
 import { db, schema } from "@/db";
 import type { DailyMetricRow } from "@/db/schema";
 import { demoData } from "./demo";
+import { efficiencyBaselines } from "./leaderboards";
 import { prioritiesFor, resolveByUser } from "./resolve";
 import { sleepScore } from "./scores";
 
@@ -58,6 +59,11 @@ export async function getGroupTrends(): Promise<GroupTrends | null> {
   }
   if (rows.length === 0) return null;
 
+  // Sleep restoration is scored against each person's own normal, so the group
+  // trend needs their baselines rather than a fixed cutoff.
+  const baselines = efficiencyBaselines(rows);
+  const baselineOf = (userId: string) => baselines.get(userId) ?? null;
+
   // Bucket rows by week (Monday-based).
   const byWeek = new Map<string, DailyMetricRow[]>();
   for (const r of rows) {
@@ -80,8 +86,8 @@ export async function getGroupTrends(): Promise<GroupTrends | null> {
 
   const defs: [TrendSeries["key"], string, string, (r: DailyMetricRow) => number | null, (v: number) => string][] = [
     ["strain", "Strain (AZM / day)", "🔥", (r) => r.activeZoneMinutes, (v) => `${Math.round(v)} min`],
-    ["sleepScore", "Sleep score", "😴", (r) => sleepScore(r), (v) => `${Math.round(v)}`],
-    ["hrv", "Recovery (HRV)", "🧘", (r) => r.hrvDailyRmssd, (v) => `${Math.round(v)} ms`],
+    ["sleepScore", "Sleep score", "😴", (r) => sleepScore(r, 480, baselineOf(r.userId)), (v) => `${Math.round(v)}`],
+    ["hrv", "Recovery (HRV)", "🧘", (r) => r.hrvDailyRmssd ?? r.hrvSdnn, (v) => `${Math.round(v)} ms`],
   ];
 
   const series: TrendSeries[] = defs.map(([key, label, emoji, pick, format]) => {
