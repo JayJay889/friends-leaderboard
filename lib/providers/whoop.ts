@@ -83,9 +83,19 @@ export const fetchWhoopDaily: ProviderFetch = async (accessToken, grantedScopes,
         const date = localDateOf(c.start, c.timezone_offset);
         cycleDate.set(c.id, date);
         if (!window(date)) continue;
-        // An ongoing cycle has no `end` yet — its strain is still accumulating,
-        // so recording it would undercount today and then never be corrected.
-        if (!c.end || c.score_state !== SCORED || c.score?.strain == null) continue;
+        /*
+         * Today's cycle is still open and its strain is still climbing. Record
+         * it anyway.
+         *
+         * This used to skip open cycles, on the reasoning that a partial value
+         * would undercount the day. That was wrong twice over: every sync
+         * overwrites the value, so it corrects itself as the day goes on and
+         * settles when the cycle closes; and skipping meant a WHOOP member's
+         * app showed today while ours showed yesterday, which reads as broken
+         * rather than cautious. It also matches Fitbit, whose Active Zone
+         * Minutes for today have always been a partial figure.
+         */
+        if (c.score_state !== SCORED || c.score?.strain == null) continue;
         const m = metric(date);
         m.strainNative = c.score.strain;
         m.activeZoneMinutes = strainToAzm(c.score.strain);
