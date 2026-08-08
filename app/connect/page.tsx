@@ -18,35 +18,44 @@ function Explainers() {
     <div className="text-sm leading-relaxed text-sub">
       <h2 className="label-caps mb-2">What we read</h2>
       <ul className="list-inside list-disc space-y-1">
-        <li>Steps &amp; Active Zone Minutes</li>
-        <li>Sleep duration, stages &amp; efficiency</li>
-        <li>Resting heart rate, HRV, breathing rate &amp; VO₂ max</li>
+        <li>Sleep: duration, stages and efficiency</li>
+        <li>Recovery signals: resting heart rate, heart rate variability, breathing rate</li>
+        <li>Daily activity: strain or active minutes, and steps</li>
+        <li>VO₂ max, where your device measures it</li>
       </ul>
       <p className="mt-3">
-        You can untick any of these on Google&apos;s consent screen — you&apos;ll simply not appear
-        on boards that need that data.
+        One daily summary per person. We never read raw heart rate streams, workout detail or
+        location. Leave a permission out and you simply won&apos;t appear on the boards that
+        need it.
       </p>
 
       <h2 className="label-caps mb-2 mt-6">What friends see</h2>
       <p>
-        Steps and Active Zone Minutes are shown as numbers. Sleep, heart and calm boards show{" "}
-        <strong className="text-ink">scores and ranks only</strong> — nobody sees your raw sleep
-        or heart data.
+        <strong className="text-ink">Scores and ranks only.</strong> Nobody sees your raw sleep,
+        heart or recovery numbers. Your own page is the only place your actual values appear.
       </p>
 
-      <h2 className="label-caps mb-2 mt-6">Before you start</h2>
+      <h2 className="label-caps mb-2 mt-6">Per device</h2>
       <ul className="list-inside list-disc space-y-1">
         <li>
-          Your Fitbit account must already be{" "}
-          <strong className="text-ink">migrated to your Google account</strong> (the Fitbit app
-          prompts for this; legacy Fitbit-only logins can&apos;t use the new API).
+          <strong className="text-ink">Fitbit:</strong> your account must already be migrated to
+          Google (the Fitbit app prompts for this). Google warns the app is
+          &quot;unverified&quot;, which is expected for a private friends app.
         </li>
         <li>
-          Google will warn that the app is &quot;unverified&quot; — expected for a private friends
-          app. Click <em>Continue</em>.
+          <strong className="text-ink">WHOOP:</strong> sign in and approve. Nothing to install.
         </li>
-        <li>You can disconnect anytime; that deletes all your stored data.</li>
+        <li>
+          <strong className="text-ink">Apple Watch:</strong> Apple keeps health data on your
+          iPhone, so your phone sends it. A few extra minutes of setup, explained after you
+          pick it.
+        </li>
       </ul>
+
+      <p className="mt-3">
+        You can disconnect at any time from your own page. That revokes our access and deletes
+        everything we hold about you.
+      </p>
     </div>
   );
 }
@@ -149,7 +158,7 @@ export default function ConnectPage({
         <p className="label-caps">Membership application</p>
         <h1 className="mt-1 font-display text-3xl font-bold tracking-tight">Join the leaderboard</h1>
         <p className="mt-2 text-sm text-sub">
-          Connect your Fitbit through your Google account. Takes about a minute.
+          Fitbit, WHOOP or Apple Watch. Takes about a minute.
         </p>
       </header>
 
@@ -163,7 +172,13 @@ export default function ConnectPage({
         <Explainers />
       </section>
 
-      <form action="/api/auth/login" method="get" className="rounded-2xl border border-brass/30 bg-card p-6 shadow-card">
+      {/*
+        One form, three submit buttons. `formaction` sends the typed invite code
+        to whichever provider was tapped, so someone arriving without the QR link
+        sees all three devices rather than Fitbit alone — which is what this page
+        used to imply.
+      */}
+      <form method="get" className="rounded-2xl border border-brass/30 bg-card p-6 shadow-card">
         <label className="block text-sm text-sub">
           Invite code
           <input
@@ -175,20 +190,39 @@ export default function ConnectPage({
             className="mt-1 block w-full rounded-lg border border-hairline bg-ivory px-3 py-2 text-ink focus:border-forest-soft focus:outline-none"
           />
         </label>
-        <p className="mt-4 rounded-lg border-l-2 border-lagoon bg-lagoon/5 px-3.5 py-2.5 text-sm leading-snug text-sub">
-          <strong className="font-semibold text-lagoon">
-            Use the Google account your Fitbit is on.
-          </strong>{" "}
-          Any other account lands here empty.
-        </p>
-        <button className="mt-4 w-full rounded-xl bg-brass px-4 py-3 font-semibold text-[#101518] shadow-card transition-colors hover:bg-brass-soft">
-          Connect Fitbit
-        </button>
-        {whoopConfigured() && (
-          <p className="mt-3 text-center text-xs text-faint">
-            On a WHOOP? Enter the code, then use the link the group sent you.
-          </p>
-        )}
+
+        <p className="mt-4 text-sm text-sub">Then pick your device:</p>
+        <div className="mt-2 space-y-2">
+          <button
+            formAction="/api/auth/login"
+            className="w-full rounded-xl border border-hairline bg-ivory px-4 py-3 text-left transition-colors hover:border-brass/60"
+          >
+            <span className="font-display font-semibold text-ink">Fitbit</span>
+            <span className="mt-0.5 block text-xs text-sub">
+              Sign in with the Google account your Fitbit is on.
+            </span>
+          </button>
+          {whoopConfigured() && (
+            <button
+              formAction="/api/auth/whoop/login"
+              className="w-full rounded-xl border border-hairline bg-ivory px-4 py-3 text-left transition-colors hover:border-brass/60"
+            >
+              <span className="font-display font-semibold text-ink">WHOOP</span>
+              <span className="mt-0.5 block text-xs text-sub">
+                Sign in with WHOOP. One tap, nothing to install.
+              </span>
+            </button>
+          )}
+          <button
+            formAction="/api/auth/apple/start"
+            className="w-full rounded-xl border border-hairline bg-ivory px-4 py-3 text-left transition-colors hover:border-brass/60"
+          >
+            <span className="font-display font-semibold text-ink">Apple Watch</span>
+            <span className="mt-0.5 block text-xs text-sub">
+              A few extra steps on your iPhone.
+            </span>
+          </button>
+        </div>
       </form>
     </div>
   );
