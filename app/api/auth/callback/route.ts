@@ -52,6 +52,7 @@ export async function GET(req: NextRequest) {
     tokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
     grantedScopes,
     connectedAt: new Date(),
+    syncRequestedAt: null,
   };
   await db()
     .insert(schema.oauthTokens)

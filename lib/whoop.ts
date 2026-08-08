@@ -1,3 +1,5 @@
+import { createHmac, timingSafeEqual } from "crypto";
+
 /**
  * WHOOP OAuth 2.0 client. Mirrors lib/google.ts, with two differences that
  * matter:
@@ -168,6 +170,52 @@ export async function whoopCollect<T = any>(
     if (!nextToken) break;
   }
   return records;
+}
+
+/**
+ * Verifies a webhook actually came from WHOOP.
+ *
+ * Their scheme: base64(HMAC-SHA256(timestamp + raw body, client secret)),
+ * compared against the X-WHOOP-Signature header. The RAW body matters — parsing
+ * and re-serialising the JSON changes the bytes and every signature then fails.
+ *
+ * Compared in constant time, because a byte-by-byte early exit leaks how much of
+ * a forged signature was correct, which is enough to guess one.
+ */
+export function verifyWebhookSignature(
+  rawBody: string,
+  signature: string | null,
+  timestamp: string | null,
+): boolean {
+  if (!signature || !timestamp) return false;
+
+  // Replay guard: a captured webhook should not stay valid indefinitely.
+  const sentAt = Number(timestamp);
+  if (!Number.isFinite(sentAt) || Math.abs(Date.now() - sentAt) > 5 * 60_000) return false;
+
+  const expected = createHmac("sha256", clientSecret())
+    .update(timestamp + rawBody)
+    .digest("base64");
+
+  const a = Buffer.from(expected);
+  const b = Buffer.from(signature);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+/** The six events WHOOP can send. `deleted` variants matter as much as updates. */
+export type WhoopEventType =
+  | "workout.updated"
+  | "workout.deleted"
+  | "sleep.updated"
+  | "sleep.deleted"
+  | "recovery.updated"
+  | "recovery.deleted";
+
+export interface WhoopWebhookEvent {
+  user_id: number;
+  id: number | string;
+  type: WhoopEventType;
+  trace_id: string;
 }
 
 export interface WhoopProfile {

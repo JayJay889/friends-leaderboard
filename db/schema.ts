@@ -64,6 +64,13 @@ export const oauthTokens = pgTable(
     tokenExpiresAt: timestamp("token_expires_at", { withTimezone: true }),
     grantedScopes: text("granted_scopes").array().notNull().default([]),
     connectedAt: timestamp("connected_at", { withTimezone: true }).notNull().defaultNow(),
+    /**
+     * Set by a provider webhook to say "this member has something new".
+     * WHOOP expects a 2XX within about a second, which is far less than a sync
+     * takes, so the webhook only raises this flag and returns. The next nudge
+     * does the actual pull and clears it.
+     */
+    syncRequestedAt: timestamp("sync_requested_at", { withTimezone: true }),
   },
   (t) => ({ pk: primaryKey({ columns: [t.userId, t.provider] }) }),
 );

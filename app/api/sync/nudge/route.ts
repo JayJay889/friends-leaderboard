@@ -1,7 +1,7 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db, schema } from "@/db";
-import { syncAllUsers } from "@/lib/sync";
+import { syncAllUsers, syncUser } from "@/lib/sync";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -35,6 +35,36 @@ export async function POST() {
     return NextResponse.json({ skipped: "not configured" });
   }
 
+  // A provider webhook said this member has something new, so they jump the
+  // staleness rule. This is how WHOOP data arrives without ever being polled.
+  const requested = await db()
+    .select({ user: schema.users, token: schema.oauthTokens })
+    .from(schema.oauthTokens)
+    .innerJoin(schema.users, eq(schema.users.id, schema.oauthTokens.userId))
+    .where(isNotNull(schema.oauthTokens.syncRequestedAt));
+
+  const pushed: { userId: string; source: string; errors: number }[] = [];
+  for (const { user, token } of requested) {
+    // Cleared first: a sync that fails should not strand the flag and retry on
+    // every page load for the rest of the day. The next webhook re-raises it.
+    await db()
+      .update(schema.oauthTokens)
+      .set({ syncRequestedAt: null })
+      .where(
+        and(
+          eq(schema.oauthTokens.userId, token.userId),
+          eq(schema.oauthTokens.provider, token.provider),
+        ),
+      );
+    try {
+      const result = await syncUser(user, token);
+      pushed.push({ userId: user.id, source: token.provider, errors: result.errors.length });
+    } catch (e) {
+      console.error(`Webhook-triggered sync failed for ${token.provider}:`, e);
+      pushed.push({ userId: user.id, source: token.provider, errors: 1 });
+    }
+  }
+
   const [newest] = await db()
     .select({ syncedAt: schema.dailyMetrics.syncedAt })
     .from(schema.dailyMetrics)
@@ -47,7 +77,7 @@ export async function POST() {
     : Infinity;
 
   if (ageMinutes < MIN_MINUTES_BETWEEN_SYNCS) {
-    return NextResponse.json({ synced: false, ageMinutes });
+    return NextResponse.json({ synced: false, ageMinutes, pushed });
   }
 
   const results = await syncAllUsers("google");
@@ -55,5 +85,6 @@ export async function POST() {
     synced: true,
     members: results.length,
     withErrors: results.filter((r) => r.errors.length > 0).length,
+    pushed,
   });
 }
