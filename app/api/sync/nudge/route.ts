@@ -9,6 +9,9 @@ export const maxDuration = 60;
 /** Never pull Fitbit more often than this, however many screens are watching. */
 const MIN_MINUTES_BETWEEN_SYNCS = 20;
 
+/** How often to re-check a WHOOP member whose night has not landed yet. */
+const WHOOP_RETRY_MINUTES = 30;
+
 /**
  * Pulls fresh Fitbit data, but only if it is already stale.
  *
@@ -27,8 +30,11 @@ const MIN_MINUTES_BETWEEN_SYNCS = 20;
  * Deliberately unauthenticated, which is safe because it is not a lever anyone
  * can pull harder: the staleness check below is the rate limit, so a thousand
  * callers a minute still produce at most one sync every twenty minutes, and the
- * only possible effect is this group's own data being up to date. Fitbit only —
- * WHOOP is meant to push to us, and Apple already does.
+ * only possible effect is this group's own data being up to date.
+ *
+ * Fitbit is the one polled on a timer. WHOOP arrives by webhook, with a
+ * demand-driven catch-up below for when that does not happen. Apple pushes from
+ * the phone and needs nothing here.
  */
 export async function POST() {
   if (!process.env.DATABASE_URL) {
@@ -65,6 +71,63 @@ export async function POST() {
     }
   }
 
+  /*
+   * Safety net for WHOOP.
+   *
+   * WHOOP is meant to arrive by webhook, which is why it is left out of the
+   * frequent Fitbit pull. But a webhook that is misconfigured, or simply never
+   * sent, fails silently and leaves a member reading yesterday — which is
+   * exactly what happened: the daily cron ran at 05:30 before her night was
+   * scored, and nothing came along afterwards to pick it up.
+   *
+   * So: if a WHOOP member has no sleep recorded for today, try again, at most
+   * every half hour. It stops as soon as their night lands, so a member costs a
+   * handful of calls on a late morning and nothing at all once they are current.
+   */
+  const catchUp: { userId: string; source: string; errors: number }[] = [];
+  const whoopMembers = await db()
+    .select({ user: schema.users, token: schema.oauthTokens })
+    .from(schema.oauthTokens)
+    .innerJoin(schema.users, eq(schema.users.id, schema.oauthTokens.userId))
+    .where(eq(schema.oauthTokens.provider, "whoop"));
+
+  if (whoopMembers.length > 0) {
+    const today = new Date().toISOString().slice(0, 10);
+    const recent = await db()
+      .select()
+      .from(schema.dailyMetrics)
+      .where(
+        and(eq(schema.dailyMetrics.source, "whoop"), eq(schema.dailyMetrics.date, today)),
+      );
+    const lastTried = await db()
+      .select({ userId: schema.dailyMetrics.userId, syncedAt: schema.dailyMetrics.syncedAt })
+      .from(schema.dailyMetrics)
+      .where(eq(schema.dailyMetrics.source, "whoop"));
+
+    const newestAttempt = new Map<string, number>();
+    for (const r of lastTried) {
+      const t = r.syncedAt.getTime();
+      if (t > (newestAttempt.get(r.userId) ?? 0)) newestAttempt.set(r.userId, t);
+    }
+    const hasTonight = new Set(
+      recent.filter((r) => r.sleepMinutes != null).map((r) => r.userId),
+    );
+
+    for (const { user, token } of whoopMembers) {
+      if (hasTonight.has(user.id)) continue;
+      if (pushed.some((p) => p.userId === user.id)) continue; // already done above
+      const since = Date.now() - (newestAttempt.get(user.id) ?? 0);
+      if (since < WHOOP_RETRY_MINUTES * 60_000) continue;
+      try {
+        const result = await syncUser(user, token);
+        catchUp.push({ userId: user.id, source: "whoop", errors: result.errors.length });
+      } catch (e) {
+        console.error("WHOOP catch-up sync failed:", e);
+        catchUp.push({ userId: user.id, source: "whoop", errors: 1 });
+      }
+    }
+  }
+
   const [newest] = await db()
     .select({ syncedAt: schema.dailyMetrics.syncedAt })
     .from(schema.dailyMetrics)
@@ -77,7 +140,7 @@ export async function POST() {
     : Infinity;
 
   if (ageMinutes < MIN_MINUTES_BETWEEN_SYNCS) {
-    return NextResponse.json({ synced: false, ageMinutes, pushed });
+    return NextResponse.json({ synced: false, ageMinutes, pushed, catchUp });
   }
 
   const results = await syncAllUsers("google");
@@ -86,5 +149,6 @@ export async function POST() {
     members: results.length,
     withErrors: results.filter((r) => r.errors.length > 0).length,
     pushed,
+    catchUp,
   });
 }
