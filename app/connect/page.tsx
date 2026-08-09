@@ -90,24 +90,20 @@ function DevicePicker({ invite }: { invite: string }) {
         </a>
       )}
 
-      <a href={`/api/auth/apple/start${q}`} className={card}>
-        <span className="font-display text-lg font-semibold text-ink">Apple Watch</span>
-        <span className="mt-0.5 block text-sm text-sub">
-          A few extra steps on your iPhone — Apple keeps health data on the phone, so the phone
-          has to send it.
-        </span>
-      </a>
-
       {/*
-        Honest guidance rather than an upsell: a second device only earns its
-        keep when it fills a gap. WHOOP reports no VO₂ max, which is what the
-        Fitness and Age Defied boards are built on.
+        Apple is deliberately not a third card. It cannot be a one-tap connect —
+        Apple seals health data on the phone, so it needs a Shortcut and an
+        automation, or a paid app. Offering it with equal weight sets people up
+        for a worse experience than the other two deliver. It stays available,
+        in small print, with the cost stated before anyone commits.
       */}
-      <p className="rounded-lg border-l-2 border-lagoon bg-lagoon/5 px-3.5 py-2.5 text-sm leading-snug text-sub">
-        <strong className="font-semibold text-lagoon">Wearing more than one?</strong> Connect
-        one now — you can add another later from your profile. Worth it mainly for WHOOP
-        wearers: adding your iPhone fills in VO₂ max, which unlocks the Fitness and Age Defied
-        boards. We keep the better number for each measurement, never double-count.
+      <p className="pt-1 text-center text-xs leading-relaxed text-faint">
+        On an Apple Watch?{" "}
+        <a href={`/apple${q}`} className="underline decoration-hairline underline-offset-2 hover:text-sub">
+          You can connect it too
+        </a>
+        , but Apple makes it a fair bit more work — a few minutes of setup on your iPhone rather
+        than one tap.
       </p>
     </div>
   );
@@ -213,15 +209,14 @@ export default function ConnectPage({
               </span>
             </button>
           )}
-          <button
-            formAction="/api/auth/apple/start"
-            className="w-full rounded-xl border border-hairline bg-ivory px-4 py-3 text-left transition-colors hover:border-brass/60"
-          >
-            <span className="font-display font-semibold text-ink">Apple Watch</span>
-            <span className="mt-0.5 block text-xs text-sub">
-              A few extra steps on your iPhone.
-            </span>
-          </button>
+          {/* Apple deliberately not offered as an equal button — see DevicePicker. */}
+          <p className="pt-1 text-center text-xs leading-relaxed text-faint">
+            On an Apple Watch?{" "}
+            <a href="/apple" className="underline decoration-hairline underline-offset-2 hover:text-sub">
+              You can connect it too
+            </a>
+            , but Apple makes it a fair bit more work.
+          </p>
         </div>
       </form>
     </div>

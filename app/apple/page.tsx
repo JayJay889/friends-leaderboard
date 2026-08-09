@@ -1,6 +1,5 @@
 import { and, desc, eq } from "drizzle-orm";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import AutoRefresh from "@/components/AutoRefresh";
 import { db, schema } from "@/db";
 import { currentUserId } from "@/lib/session";
@@ -13,13 +12,94 @@ export const dynamic = "force-dynamic";
  * first data to arrive — that arrival is the only honest confirmation that it
  * worked.
  */
+/**
+ * What someone is agreeing to before an account exists for them.
+ *
+ * Apple cannot be a one-tap connect, and pretending otherwise sets people up to
+ * abandon it halfway. Stating the cost first also stops a curious tap from
+ * leaving an empty member on the boards and a "just joined" card on the TV.
+ */
+function BeforeYouStart({ invite }: { invite?: string }) {
+  return (
+    <div className="mx-auto max-w-xl space-y-6">
+      <header className="text-center">
+        <p className="label-caps">Apple Watch</p>
+        <h1 className="mt-1 font-display text-3xl font-bold tracking-tight">
+          Doable, but not one tap
+        </h1>
+        <p className="mt-2 text-sm text-sub">
+          Apple keeps health data sealed on your iPhone. No website can ask for it, so your phone
+          has to send it. That means a few minutes of setup, and it is worth knowing what you are
+          in for before you start.
+        </p>
+      </header>
+
+      <section className="rounded-2xl border border-hairline bg-card p-5 shadow-card">
+        <h2 className="label-caps mb-3">Two ways, both with a catch</h2>
+        <div className="space-y-4 text-sm text-sub">
+          <div>
+            <p className="font-semibold text-ink">Free, using the Shortcuts app you already have</p>
+            <p className="mt-1">
+              About five minutes to set up, including an automation you have to configure yourself.
+              It then runs on its own, but{" "}
+              <strong className="text-ink">
+                iPhone shows a notification banner every time it runs
+              </strong>{" "}
+              and there is no way to turn that off.
+            </p>
+          </div>
+          <div>
+            <p className="font-semibold text-ink">Paid, using Health Auto Export</p>
+            <p className="mt-1">
+              A few euros. Syncs quietly in the background with no automation and no banners. That
+              is precisely what the money buys.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-hairline bg-card p-5 shadow-card text-sm text-sub">
+        <h2 className="label-caps mb-2">Worth knowing</h2>
+        <ul className="list-inside list-disc space-y-1">
+          <li>If you also own a Fitbit or a WHOOP, connect that instead. It takes one tap.</li>
+          <li>
+            Already on WHOOP? Adding your iPhone fills in VO₂ max, which is the only thing WHOOP
+            cannot give us, and puts you on all five boards.
+          </li>
+          <li>Sleep, heart rate and recovery will be accurate. Strain is an estimate.</li>
+        </ul>
+      </section>
+
+      {invite ? (
+        <a
+          href={`/api/auth/apple/start?invite=${encodeURIComponent(invite)}`}
+          className="block rounded-xl bg-brass px-4 py-4 text-center text-lg font-semibold text-[#101518] shadow-card transition-colors hover:bg-brass-soft"
+        >
+          Set it up anyway
+        </a>
+      ) : (
+        <p className="rounded-xl border border-hairline bg-card px-4 py-3 text-center text-sm text-sub">
+          Open the join link the group sent you to start.
+        </p>
+      )}
+
+      <p className="text-center text-sm">
+        <a href="/connect" className="text-faint underline decoration-hairline underline-offset-2">
+          Back to the other devices
+        </a>
+      </p>
+    </div>
+  );
+}
+
 export default async function ApplePage({
   searchParams,
 }: {
-  searchParams: { code?: string };
+  searchParams: { code?: string; invite?: string };
 }) {
   const userId = currentUserId();
-  if (!userId) redirect("/connect");
+  // No account yet: explain the cost first, and only create one if they commit.
+  if (!userId) return <BeforeYouStart invite={searchParams.invite} />;
 
   const [pairing] = await db()
     .select()
