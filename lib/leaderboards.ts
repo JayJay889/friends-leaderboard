@@ -19,6 +19,39 @@ export interface BoardEntry {
   score: number; // sort key, higher = better
   delta: number | null; // previous-window rank minus current rank (positive = climbed)
   prevRank: number | null;
+  /**
+   * Days since this member's newest data. Null when current. Set once their
+   * watch has stopped reaching us, so a frozen number is visibly frozen rather
+   * than quietly wrong.
+   */
+  staleDays: number | null;
+}
+
+/** Below this a gap is just "this morning's data has not landed yet". */
+export const STALE_AFTER_DAYS = 2;
+
+/**
+ * How far behind each member's newest data is.
+ *
+ * Deliberately measured on the newest DAY of data, not the last sync attempt. A
+ * sync that runs, succeeds and returns nothing new still updates its own
+ * timestamp, so "last synced" can look healthy while a member has been frozen
+ * for a week.
+ */
+export function stalenessByUser(rows: DailyMetricRow[], today = new Date()): Map<string, number> {
+  const newest = new Map<string, string>();
+  for (const r of rows) {
+    if (!newest.has(r.userId) || r.date > newest.get(r.userId)!) newest.set(r.userId, r.date);
+  }
+  const todayIso = today.toISOString().slice(0, 10);
+  const out = new Map<string, number>();
+  for (const [userId, date] of newest) {
+    const days = Math.floor(
+      (Date.parse(`${todayIso}T00:00:00Z`) - Date.parse(`${date}T00:00:00Z`)) / 86_400_000,
+    );
+    if (days >= STALE_AFTER_DAYS) out.set(userId, days);
+  }
+  return out;
 }
 
 export interface StoryPerson {
@@ -315,6 +348,9 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
   const baselines = efficiencyBaselines(
     [...resolveByUser(baselineRows, priorities).values()].flat(),
   );
+  // Computed from the full 30-day window, so a member frozen for a week is
+  // caught even though the 7-day board window contains nothing of theirs.
+  const stale = stalenessByUser(baselineRows);
   const current = buildBoardScores(users, rowsByUser, baselines);
   const previous = buildBoardScores(users, prevByUser, baselines);
   const userById = new Map(users.map((u) => [u.id, u]));
@@ -343,6 +379,7 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
         score: r.score,
         delta: prevRank == null ? null : prevRank - r.rank,
         prevRank,
+        staleDays: stale.get(userId) ?? null,
       });
     }
     entries.sort((a, b) => a.rank - b.rank);
@@ -361,6 +398,7 @@ export async function getLeaderboardData(viewerUserId?: string | null): Promise<
     score: c.score,
     delta: null,
     prevRank: null,
+    staleDays: stale.get(c.userId) ?? null,
   }));
 
   const freshSince = Date.now() - NEWCOMER_WINDOW_MIN * 60_000;

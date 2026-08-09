@@ -6,7 +6,7 @@ import DisconnectButton from "@/components/DisconnectButton";
 import Ring, { bandColor } from "@/components/Ring";
 import Sparkline from "@/components/Sparkline";
 import { db, schema } from "@/db";
-import { formatHours, getLeaderboardData, realAge } from "@/lib/leaderboards";
+import { formatHours, getLeaderboardData, realAge, stalenessByUser } from "@/lib/leaderboards";
 import { SCOPE } from "@/lib/google";
 import { PROVIDER_LABELS } from "@/lib/providers/types";
 import { prioritiesFor, resolveRows } from "@/lib/resolve";
@@ -89,6 +89,14 @@ export default async function MePage({
   const rows = resolveRows(rawRows, prioritiesFor([user], identities).get(userId)!).reverse();
 
   const boards = await getLeaderboardData(userId);
+  // Freshness of MY own data, for the connection panel below.
+  const newestDay = rows.length ? rows[0].date : null;
+  const myStaleDays = newestDay
+    ? (() => {
+        const d = stalenessByUser(rows).get(userId);
+        return d ?? null;
+      })()
+    : null;
   // Sleep restoration is judged against your own 30-day normal, so the number
   // means the same thing whichever watch you wear.
   const effValues = rows.map((r) => r.sleepEfficiency).filter((v): v is number => v != null);
@@ -377,6 +385,25 @@ export default async function MePage({
       {/* Connection */}
       <section className="rounded-2xl border border-hairline bg-card p-5 shadow-card">
         <h2 className="mb-3 font-display text-lg font-semibold">Connection &amp; data</h2>
+        {/*
+          The failure that matters is silent: a connection breaks, the boards keep
+          showing the last number, and nobody notices for weeks. Measured on the
+          newest DAY of data, because a sync that succeeds and returns nothing new
+          still looks healthy by its own timestamp.
+        */}
+        <p className={`mb-3 text-sm ${myStaleDays != null ? "text-brick" : "text-sub"}`}>
+          {newestDay == null ? (
+            "No data yet."
+          ) : myStaleDays != null ? (
+            <>
+              <strong className="font-semibold">Nothing new since {day(newestDay)}.</strong>{" "}
+              Your watch may have stopped reaching us — check it has synced with its own app, and
+              reconnect below if that does not fix it.
+            </>
+          ) : (
+            <>Up to date — newest data {day(newestDay)}.</>
+          )}
+        </p>
         {tokens.length > 0 ? (
           <>
             <ul className="mb-4 space-y-1 text-sm text-sub">

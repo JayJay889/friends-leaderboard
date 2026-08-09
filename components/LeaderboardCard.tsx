@@ -70,6 +70,19 @@ export function EntryRow({
             red lantern
           </span>
         )}
+        {/*
+          A member whose watch has stopped reaching us keeps their old number and
+          their old rank, which looks like a real result. Saying so is fairer to
+          everyone they are still being ranked above.
+        */}
+        {entry.staleDays != null && (
+          <span
+            className="hl shrink-0 rounded-full bg-white/5 px-2 py-0.5 !text-[9px] text-faint"
+            title={`No new data for ${entry.staleDays} days`}
+          >
+            {entry.staleDays}d old
+          </span>
+        )}
         <span
           className={`shrink-0 font-num font-bold tabular-nums ${leader ? "text-2xl" : "text-base"}`}
           style={{ color: isLast ? "#FF0026" : valueColor(boardKey, entry, leader ? accent.hex : "#FFFFFF") }}

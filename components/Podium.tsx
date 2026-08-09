@@ -21,6 +21,16 @@ function Spot({ entry, size }: { entry: BoardEntry; size: number }) {
       <p className={`font-num font-bold tabular-nums ${first ? "text-2xl text-brass" : "text-lg text-sub"}`}>
         {entry.display}
       </p>
+      {/*
+        The podium is the headline, which makes it the worst place for a frozen
+        number to sit unmarked: it reads as a standing this week rather than a
+        watch that stopped days ago.
+      */}
+      {entry.staleDays != null && (
+        <span className="hl rounded-full bg-white/5 px-2 py-0.5 !text-[9px] text-faint">
+          {entry.staleDays}d old
+        </span>
+      )}
       <div
         className={`flex w-full items-start justify-center rounded-t-xl border border-b-0 border-hairline pt-2 font-num text-xs font-semibold ${step.h} ${
           first ? "bg-brass-wash text-brass" : "bg-ivory text-faint"
